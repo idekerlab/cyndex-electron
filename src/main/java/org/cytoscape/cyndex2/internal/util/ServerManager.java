@@ -208,6 +208,16 @@ public class ServerManager {
 		PropertyChangeEvent event = new PropertyChangeEvent(this, "selectedServer", oldValue, selectedServer);
 		mPcs.firePropertyChange(event);
 	}
+	
+	/**
+	 * To update UI for OpenNetworkDialog on initial display of the NDEx
+	 * panel this helper method was created
+	 * which fires a property change event
+	 */
+	public void firePropertyChangeEvent(){
+		PropertyChangeEvent event = new PropertyChangeEvent(this, "selectedServer", "unknown", selectedServer);
+		mPcs.firePropertyChange(event);
+	}
 
 	public void saveSelectedServer() {
 		File configDir = CyServiceModule.INSTANCE.getConfigDir();
