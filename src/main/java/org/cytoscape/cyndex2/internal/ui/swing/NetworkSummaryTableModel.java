@@ -36,13 +36,33 @@ public class NetworkSummaryTableModel extends AbstractTableModel {
 	public static final int EDGES_COL = 5;
 	public static final int MODIFIED_COL = 6;
 
-	private final List<NetworkSummary> networkSummaries;
+	private List<NetworkSummary> networkSummaries;
 
 	private Consumer<NetworkSummary> networkSummaryConsumer;
+	private boolean hideImportColumn;
 	
-	public NetworkSummaryTableModel(List<NetworkSummary> networkSummaries, Consumer<NetworkSummary> networkSummaryConsumer) {
+	public NetworkSummaryTableModel(List<NetworkSummary> networkSummaries, Consumer<NetworkSummary> networkSummaryConsumer, boolean hideImportColumn) {
 		this.networkSummaries = new ArrayList<NetworkSummary>(networkSummaries);
 		this.networkSummaryConsumer = networkSummaryConsumer;
+		this.hideImportColumn = hideImportColumn;
+	}
+	
+	public NetworkSummaryTableModel(List<NetworkSummary> networkSummaries, Consumer<NetworkSummary> networkSummaryConsumer) {
+		this(networkSummaries, networkSummaryConsumer, false);
+	}
+	
+	public void replaceNetworkSummaries(List<NetworkSummary> networkSummaries){
+		this.networkSummaries = new ArrayList<>(networkSummaries);
+		this.fireTableDataChanged();
+	}
+	
+	public void clearNetworkSummaries(){
+		this.networkSummaries.clear();
+		this.fireTableDataChanged();
+	}
+	
+	public List<NetworkSummary> getNetworkSummaries(){
+		return networkSummaries;
 	}
 
 	public static class TimestampRenderer extends DefaultTableCellRenderer {
@@ -147,6 +167,9 @@ public class NetworkSummaryTableModel extends AbstractTableModel {
 
 	@Override
 	public int getColumnCount() {
+		if (this.hideImportColumn == true){
+			return 6;
+		}
 		return 7;
 	}
 
@@ -157,7 +180,11 @@ public class NetworkSummaryTableModel extends AbstractTableModel {
 
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
-		switch (columnIndex) {
+		int columnIndexAdjusted = columnIndex;
+		if (this.hideImportColumn == true){
+			columnIndexAdjusted++;
+		}
+		switch (columnIndexAdjusted) {
 		case IMPORT_COL:
 			return NetworkSummary.class;
 		case NAME_COL:
@@ -180,7 +207,11 @@ public class NetworkSummaryTableModel extends AbstractTableModel {
 	@Override
 	public Object getValueAt(int arg0, int arg1) {
 		final NetworkSummary networkSummary = networkSummaries.get(arg0);
-		switch (arg1) {
+		int arg1Adjusted = arg1;
+		if (this.hideImportColumn == true){
+			arg1Adjusted++;
+		}
+		switch (arg1Adjusted) {
 		case IMPORT_COL:
 			return networkSummary;
 		case NAME_COL:
@@ -202,7 +233,11 @@ public class NetworkSummaryTableModel extends AbstractTableModel {
 
 	@Override
 	public String getColumnName(int columnIndex) {
-		switch (columnIndex) {
+		int columnIndexAdjusted = columnIndex;
+		if (this.hideImportColumn == true){
+			columnIndexAdjusted++;
+		}
+		switch (columnIndexAdjusted) {
 		case IMPORT_COL:
 			return "";
 		case NAME_COL:
@@ -223,6 +258,9 @@ public class NetworkSummaryTableModel extends AbstractTableModel {
 	}
 
 	public boolean isCellEditable(int row, int column) {
+		if (this.hideImportColumn == true){
+			return false;
+		}
 		return column == IMPORT_COL;
 	}
 }
