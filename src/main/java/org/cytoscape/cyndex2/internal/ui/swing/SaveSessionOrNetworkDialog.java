@@ -38,7 +38,7 @@ import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 
 /*
  * #%L
- * Cytoscape Open Dialog (OpenDialog)
+ * Cytoscape Save Session Or Network Dialog (SaveSessionOrNetworkDialog)
  * $Id:$
  * $HeadURL:$
  * %%
@@ -85,12 +85,21 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private Color _defaultButtonColor;
 	private JLabel _locationLabel;
 	private JButton _ndexSignInButton;
+	JTextField _ndexSaveAsTextField;
 	private String _selectedCard;
+	private String _initialNetworkName;
 	
 	public SaveSessionOrNetworkDialog(){
 		_guiLoaded = false;
 	}
 	
+	public void setInitialNetworkName(final String name){
+		if (name == null){
+			_initialNetworkName = "";
+			return;
+		} 
+		_initialNetworkName = name;
+	}
 	/**
 	 * Gets open button for main dialog so caller can add it to
 	 * the JOptionPane dialog
@@ -240,39 +249,37 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		_openSessionButton.setOpaque(true);
         _openSessionButton.setPreferredSize(_leftButtonsDimensions);
 
-		_openSessionButton.addActionListener(new ActionListener() {
-			/**
-			 * When a user clicks on the save session button need to change
-			 * the background for the save ndex button and for save session 
-			 * button. Also need to determine if the open button should be
-			 * enabled or not
-			 */
-			@Override
-			public void actionPerformed(ActionEvent e){
-				CardLayout cl = (CardLayout)_cards.getLayout();
-				cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_SESSION);
-				_openNDExButton.setBackground(_defaultButtonColor);
-				_openSessionButton.setBackground(_SessionButtonOrange);
-				setButtonFocus(false, _openNDExButton);
-				setButtonFocus(true, _openSessionButton);
-				
-				_selectedCard = SaveSessionOrNetworkDialog.SAVE_SESSION;
-				if (_saveAsTextField == null){
-					_mainSaveButton.setEnabled(true);
-				} else {
-					_mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
-				}
-			}
-		});
+        _openSessionButton.addActionListener(new ActionListener() {
+                /**
+                 * When a user clicks on the save session button need to change
+                 * the background for the save ndex button and for save session 
+                 * button. Also need to determine if the open button should be
+                 * enabled or not
+                 */
+                @Override
+                public void actionPerformed(ActionEvent e){
+                        CardLayout cl = (CardLayout)_cards.getLayout();
+                        cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_SESSION);
+                        _openNDExButton.setBackground(_defaultButtonColor);
+                        _openSessionButton.setBackground(_SessionButtonOrange);
+                        setButtonFocus(false, _openNDExButton);
+                        setButtonFocus(true, _openSessionButton);
 
-		leftPanel.add(_openSessionButton, BorderLayout.PAGE_END);
+                        _selectedCard = SaveSessionOrNetworkDialog.SAVE_SESSION;
+                        if (_saveAsTextField == null){
+                                _mainSaveButton.setEnabled(true);
+                        } else {
+                                _mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
+                        }
+                }
+        });
+
+	leftPanel.add(_openSessionButton, BorderLayout.PAGE_END);
         openDialogPanel.add(leftPanel, BorderLayout.LINE_START);
 
         JPanel rightPanel = getRightCardPanel();
         openDialogPanel.add(rightPanel, BorderLayout.LINE_END);
-		
-		return openDialogPanel;
-		
+            return openDialogPanel;
 	}
 	
 	/**
@@ -371,7 +378,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return _cards;
 	}
 	
-		private JPanel getNDExSignInPanel(){
+	private JPanel getNDExSignInPanel(){
 		JPanel topPanel = new JPanel(new GridBagLayout());
 		topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
 		topPanel.setPreferredSize(new Dimension(_ndexPanelDimension.width, 50));
@@ -416,7 +423,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		JPanel saveAsPanel = new JPanel();
 		JLabel saveAsLabel = new JLabel("<html><font color=\"#000000\">Save As:</font></html>");
 		saveAsPanel.add(saveAsLabel, BorderLayout.LINE_START);
-		JTextField _ndexSaveAsTextField = new JTextField("Untitled");
+		_ndexSaveAsTextField = new JTextField(_initialNetworkName);
 		_ndexSaveAsTextField.setPreferredSize(new Dimension(300, 25));
 		saveAsPanel.add(_ndexSaveAsTextField, BorderLayout.LINE_END);
 		_ndexPanel.add(saveAsPanel, BorderLayout.PAGE_START);
