@@ -3,7 +3,7 @@ package org.cytoscape.cyndex2.internal.task;
 import java.io.File;
 import javax.swing.JOptionPane;
 import org.cytoscape.application.swing.CySwingApplication;
-import org.cytoscape.cyndex2.internal.ui.OpenNetworkDialog;
+import org.cytoscape.cyndex2.internal.ui.swing.OpenSessionOrNetworkDialog;
 import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 
@@ -42,12 +42,12 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
 
 	private final CyServiceRegistrar serviceRegistrar;
 
-	private OpenNetworkDialog _dialog;
+	private OpenSessionOrNetworkDialog _dialog;
 	private ShowDialogUtil _dialogUtil;
 	
 	public OpenSessionOrNetworkFromNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar) {
 		this.serviceRegistrar = serviceRegistrar;
-		_dialog = new OpenNetworkDialog();
+		_dialog = new OpenSessionOrNetworkDialog();
 		_dialogUtil = new ShowDialogUtil();
 	}
 
@@ -77,13 +77,13 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
 		// if res is 0 then the user wants to open the network
         if (res == 0){
 			// if open session card was displayed see if there is a file to load
-			if (_dialog.getSelectedCard().equals(OpenNetworkDialog.OPEN_SESSION)){
+			if (_dialog.getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_SESSION)){
 				File sessionFile = _dialog.getSelectedSessionFile();
 				if (sessionFile != null){
 					return new TaskIterator(1, new OpenSessionTask(sessionFile, serviceRegistrar));
 				}
 			// else if ndex card was displayed, see if there is a network to load
-			} else if (_dialog.getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
+			} else if (_dialog.getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
 				NetworkSummary netSummary = _dialog.getNDExSelectedNetwork();
 				if (netSummary != null){
 					try{
