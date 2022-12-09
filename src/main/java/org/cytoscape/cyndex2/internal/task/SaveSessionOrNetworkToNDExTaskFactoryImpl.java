@@ -1,10 +1,12 @@
 package org.cytoscape.cyndex2.internal.task;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.UUID;
 import javax.swing.JOptionPane;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.cyndex2.internal.rest.parameter.NDExBasicSaveParameters;
 import org.cytoscape.cyndex2.internal.ui.swing.SaveSessionOrNetworkDialog;
 import org.cytoscape.cyndex2.internal.util.NDExNetworkManager;
 import org.cytoscape.cyndex2.internal.util.Server;
@@ -13,8 +15,9 @@ import org.cytoscape.cyndex2.internal.util.UpdateUtil;
 import org.cytoscape.model.CyNetwork;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
-import org.cytoscape.task.internal.ndex.ui.ShowDialogUtil;
+import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.work.AbstractTaskFactory;
+import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskIterator;
 
 /*
@@ -81,10 +84,7 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 	@Override
 	public synchronized TaskIterator createTaskIterator() {
 		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);
-		
-		
-		
-		
+
 		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
 		// check if network is already on NDEx and we have valid credentials...
 		CyNetwork currentNetwork = appManager.getCurrentNetwork();
@@ -97,12 +97,19 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 					UpdateUtil.updateIsPossible(currentNetwork, savedUUID,
 							selectedServer.getModelAccessLayer().getNdexRestClient(), 
 							selectedServer.getModelAccessLayer());
-					System.out.println("We can just save");
-					return new TaskIterator();
+                                        NDExBasicSaveParameters params = new NDExBasicSaveParameters();
+                                        params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
+                                        params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
+                                        params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
+                                        params.metadata = new HashMap<>();
+                                        
+                                        NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
+					return fac.createTaskIterator(currentNetwork);
 				}
 			} catch(Exception ex){
 				ex.printStackTrace();
 				// couldn't just save so dont and bring up the gui
+                                
 			}
 		}
 		
@@ -128,10 +135,18 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 					return new TaskIterator(1, new SaveSessionAsTask(sessionFile, serviceRegistrar));
 				}
 			} else if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
-				System.out.println("do nothing");
+				NDExBasicSaveParameters params = new NDExBasicSaveParameters();
+                                        params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
+                                        params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
+                                        params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
+                                        params.metadata = new HashMap<>();
+                                        
+                                        NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
+					return fac.createTaskIterator(currentNetwork);
+                                
 			}
 			
         }
-		return new TaskIterator();
+		return null;
 	}
 }
