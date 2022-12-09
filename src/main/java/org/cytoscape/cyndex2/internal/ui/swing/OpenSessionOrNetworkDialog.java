@@ -1,4 +1,4 @@
-package org.cytoscape.cyndex2.internal.ui;
+package org.cytoscape.cyndex2.internal.ui.swing;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -69,8 +69,8 @@ import org.slf4j.LoggerFactory;
  * #L%
  */
 @SuppressWarnings("serial")
-public class OpenNetworkDialog extends JPanel implements PropertyChangeListener {
-	private final static Logger LOGGER = LoggerFactory.getLogger(OpenNetworkDialog.class);
+public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChangeListener {
+	private final static Logger LOGGER = LoggerFactory.getLogger(OpenSessionOrNetworkDialog.class);
 	public final static String OPEN_SESSION = "OpenSession";
 	public final static String OPEN_NDEX = "OpenNDEx";
 	public final static String SIGN_IN = "Sign in";
@@ -106,7 +106,7 @@ public class OpenNetworkDialog extends JPanel implements PropertyChangeListener 
 	private boolean _ndexNeverDisplayed = true;
 	
 	
-	public OpenNetworkDialog(){
+	public OpenSessionOrNetworkDialog(){
 		_guiLoaded = false;
 	}
 	
@@ -179,7 +179,7 @@ public class OpenNetworkDialog extends JPanel implements PropertyChangeListener 
 	 * @return 
 	 */
 	public File getSelectedSessionFile(){
-		if (getSelectedCard().equals(OpenNetworkDialog.OPEN_SESSION)){
+		if (getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_SESSION)){
 			
 			if (_sessionChooser.getSelectedFile() != null && _sessionChooser.getSelectedFile().isFile()){
 				return _sessionChooser.getSelectedFile();
@@ -193,7 +193,7 @@ public class OpenNetworkDialog extends JPanel implements PropertyChangeListener 
 		if (getSelectedCard() == null){
 			return null;
 		}
-		if (getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
+		if (getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
 			if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
 				return _myNetSummaryTable.getNetworkSummaries().get(_selectedNDExNetworkIndex);
 			}
@@ -249,10 +249,10 @@ public class OpenNetworkDialog extends JPanel implements PropertyChangeListener 
 			@Override
 			public void actionPerformed(ActionEvent e){
 				CardLayout cl = (CardLayout)_cards.getLayout();
-				cl.show(_cards, OpenNetworkDialog.OPEN_NDEX);
+				cl.show(_cards, OpenSessionOrNetworkDialog.OPEN_NDEX);
 				_openNDExButton.setBackground(_NDExButtonBlue);
 				_openSessionButton.setBackground(_defaultButtonColor);
-				_selectedCard = OpenNetworkDialog.OPEN_NDEX;
+				_selectedCard = OpenSessionOrNetworkDialog.OPEN_NDEX;
 				setButtonFocus(true, _openNDExButton);
 				setButtonFocus(false, _openSessionButton);
 				// need to figure out if this should be enabled or not
@@ -286,10 +286,10 @@ public class OpenNetworkDialog extends JPanel implements PropertyChangeListener 
 			@Override
 			public void actionPerformed(ActionEvent e){
 				CardLayout cl = (CardLayout)_cards.getLayout();
-				cl.show(_cards, OpenNetworkDialog.OPEN_SESSION);
+				cl.show(_cards, OpenSessionOrNetworkDialog.OPEN_SESSION);
 				_openNDExButton.setBackground(_defaultButtonColor);
 				_openSessionButton.setBackground(_SessionButtonOrange);
-				_selectedCard = OpenNetworkDialog.OPEN_SESSION;
+				_selectedCard = OpenSessionOrNetworkDialog.OPEN_SESSION;
 				setButtonFocus(false, _openNDExButton);
 				setButtonFocus(true, _openSessionButton);
 				if (getSelectedSessionFile() != null){
@@ -370,13 +370,13 @@ public class OpenNetworkDialog extends JPanel implements PropertyChangeListener 
 		System.out.println("Created file chooser...: " + _sessionChooser.getControlButtonsAreShown());
 		CardLayout cl = (CardLayout)_cards.getLayout();
 		
-		_cards.add(_sessionChooser, OpenNetworkDialog.OPEN_SESSION);
-		cl.addLayoutComponent(_sessionChooser, OpenNetworkDialog.OPEN_SESSION);
-		_selectedCard = OpenNetworkDialog.OPEN_SESSION;
+		_cards.add(_sessionChooser, OpenSessionOrNetworkDialog.OPEN_SESSION);
+		cl.addLayoutComponent(_sessionChooser, OpenSessionOrNetworkDialog.OPEN_SESSION);
+		_selectedCard = OpenSessionOrNetworkDialog.OPEN_SESSION;
 		
 		createNDExPanel();
-		_cards.add(_ndexPanel, OpenNetworkDialog.OPEN_NDEX);
-		cl.addLayoutComponent(_ndexPanel, OpenNetworkDialog.OPEN_NDEX);
+		_cards.add(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
+		cl.addLayoutComponent(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
 		System.out.println("Does this change appear");
 		
 		return _cards;
