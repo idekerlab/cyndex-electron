@@ -464,7 +464,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 					updateLocationLabel(ServerManager.INSTANCE.getSelectedServer().getUrl());
 				} else {
 					updateLocationLabel(null);
-				}
+		}
 				return 1;
 			});
 		}
