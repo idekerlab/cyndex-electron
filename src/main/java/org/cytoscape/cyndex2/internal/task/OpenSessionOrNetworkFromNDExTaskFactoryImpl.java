@@ -8,7 +8,7 @@ import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
-import org.cytoscape.task.internal.ndex.ui.ShowDialogUtil;
+import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.ndexbio.model.object.network.NetworkSummary;
