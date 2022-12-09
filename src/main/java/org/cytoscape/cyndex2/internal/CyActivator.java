@@ -30,6 +30,7 @@ import org.cytoscape.cyndex2.internal.task.OpenBrowseTaskFactory;
 import org.cytoscape.cyndex2.internal.task.OpenSaveCollectionTaskFactory;
 import org.cytoscape.cyndex2.internal.task.OpenSaveTaskFactory;
 import org.cytoscape.cyndex2.internal.task.OpenSessionOrNetworkFromNDExTaskFactoryImpl;
+import org.cytoscape.cyndex2.internal.task.SaveSessionOrNetworkToNDExTaskFactoryImpl;
 import org.cytoscape.cyndex2.internal.ui.ImportUserNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.ImportNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.MainToolBarAction;
@@ -46,10 +47,9 @@ import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.NetworkCollectionTaskFactory;
 import org.cytoscape.task.RootNetworkCollectionTaskFactory;
-import static org.cytoscape.work.ServiceProperties.IN_TOOL_BAR;
+import static org.cytoscape.work.ServiceProperties.ACCELERATOR;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP_LONG_DESCRIPTION;
-import static org.cytoscape.work.ServiceProperties.TOOL_BAR_GRAVITY;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskManager;
 import org.osgi.framework.Bundle;
@@ -184,12 +184,26 @@ public class CyActivator extends AbstractCyActivator {
 		if (CyActivator.getHideOpenSaveMenuOptions() == false){
 			ndexOpenNetworkTaskFactoryProps.setProperty(TITLE, "Open Network");
 		} else {
-			ndexOpenNetworkTaskFactoryProps.setProperty(TITLE, "Open Network");
-
+			ndexOpenNetworkTaskFactoryProps.setProperty(TITLE, "Open");
+			ndexOpenNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd o");
 			//ndexOpenNetworkTaskFactoryProps.setProperty(TOOL_BAR_GRAVITY, "1.1");
 			//ndexOpenNetworkTaskFactoryProps.setProperty(IN_TOOL_BAR, "true");
 		}
 		registerService(bc, openSessionOrNetworkFac, TaskFactory.class, ndexOpenNetworkTaskFactoryProps);
+		
+		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFac = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar);
+		final Properties ndexSaveSessionOrNetworkTaskFactoryProps = new Properties();
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ID, "openSessionOrNetworkFromCloudTaskFactory");
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TITLE, "Save Network ");
+		if (CyActivator.getHideOpenSaveMenuOptions() == true){
+			ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd s");
+		}
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "1.4");
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
+		registerService(bc, saveSessionOrNetworkFac, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryProps);
+
 		
 		
 		// TF for NDEx Save Collection
