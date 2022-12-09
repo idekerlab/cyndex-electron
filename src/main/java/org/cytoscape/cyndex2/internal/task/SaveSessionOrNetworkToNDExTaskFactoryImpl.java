@@ -1,19 +1,21 @@
 package org.cytoscape.cyndex2.internal.task;
 
 import java.io.File;
+import java.util.UUID;
 import javax.swing.JOptionPane;
+import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
-import org.cytoscape.cyndex2.internal.ui.swing.OpenSessionOrNetworkDialog;
 import org.cytoscape.cyndex2.internal.ui.swing.SaveSessionOrNetworkDialog;
+import org.cytoscape.cyndex2.internal.util.NDExNetworkManager;
 import org.cytoscape.cyndex2.internal.util.Server;
+import org.cytoscape.cyndex2.internal.util.ServerManager;
+import org.cytoscape.cyndex2.internal.util.UpdateUtil;
+import org.cytoscape.model.CyNetwork;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.internal.ndex.ui.ShowDialogUtil;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
-import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.rest.client.NdexRestClient;
-import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 
 /*
  * #%L
@@ -80,20 +82,29 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 	public synchronized TaskIterator createTaskIterator() {
 		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);
 		
-		/*
+		
+		
+		
 		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
 		// check if network is already on NDEx and we have valid credentials...
 		CyNetwork currentNetwork = appManager.getCurrentNetwork();
-		UUID ndexUUID = NDExNetworkManager.getUUID(currentNetwork);
-		if (ndexUUID != null && _ndexServer.getUsername() != null){
+		UUID savedUUID = NDExNetworkManager.getUUID(currentNetwork);
+		if (savedUUID != null){
 			try {
-				NdexRestClientModelAccessLayer ndexAccessLayer = _ndexServer.getModelAccessLayer();
-				
-			} catch(Exception e){
-				e.printStackTrace();
+			
+				Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
+				if (selectedServer != null){
+					UpdateUtil.updateIsPossible(currentNetwork, savedUUID,
+							selectedServer.getModelAccessLayer().getNdexRestClient(), 
+							selectedServer.getModelAccessLayer());
+					System.out.println("We can just save");
+					return new TaskIterator();
+				}
+			} catch(Exception ex){
+				ex.printStackTrace();
+				// couldn't just save so dont and bring up the gui
 			}
-		}*/
-		
+		}
 		
 		if (_dialog.createGUI() == false){
 			return new TaskIterator();
