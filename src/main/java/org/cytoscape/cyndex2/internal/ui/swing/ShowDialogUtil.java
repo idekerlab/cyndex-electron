@@ -1,4 +1,4 @@
-package org.cytoscape.task.internal.ndex.ui;
+package org.cytoscape.cyndex2.internal.ui.swing;
 
 import java.awt.Component;
 import javax.swing.Icon;
