@@ -1,18 +1,18 @@
 package org.cytoscape.cyndex2.internal.task;
 
-import java.util.UUID;
+import java.io.File;
 import javax.swing.JOptionPane;
-import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.cyndex2.internal.ui.swing.OpenSessionOrNetworkDialog;
 import org.cytoscape.cyndex2.internal.ui.swing.SaveSessionOrNetworkDialog;
-import org.cytoscape.cyndex2.internal.util.NDExNetworkManager;
 import org.cytoscape.cyndex2.internal.util.Server;
-import org.cytoscape.model.CyNetwork;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.internal.ndex.ui.ShowDialogUtil;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
+import org.ndexbio.model.object.network.NetworkSummary;
+import org.ndexbio.rest.client.NdexRestClient;
 import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 
 /*
@@ -110,27 +110,16 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
                            options[0]);
 		// if res is 0 then the user wants to save the network or session
         if (res == 0){
-			/**
 			// if open session card was displayed see if there is a file to load
-			if (_dialog.getSelectedCard().equals(OpenDialog.OPEN_SESSION)){
+			if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_SESSION)){
 				File sessionFile = _dialog.getSelectedSessionFile();
 				if (sessionFile != null){
-					return new TaskIterator(1, new OpenSessionTask(sessionFile, serviceRegistrar));
+					return new TaskIterator(1, new SaveSessionAsTask(sessionFile, serviceRegistrar));
 				}
-			// else if ndex card was displayed, see if there is a file to load
-			} else if (_dialog.getSelectedCard().equals(OpenDialog.OPEN_NDEX)){
-				NetworkSummary netSummary = _dialog.getNDExSelectedNetwork();
-				if (netSummary != null){
-					try{
-						NdexRestClient raw_client = new NdexRestClient("cbass", "test12345", "public.ndexbio.org");
-						NdexRestClientModelAccessLayer client = new NdexRestClientModelAccessLayer(raw_client);
-						return new TaskIterator(1, new OpenNetworkFromNDExTask(netSummary, client, serviceRegistrar));
-					} catch(Exception e){
-					
-					}
-				}
+			} else if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
+				System.out.println("do nothing");
 			}
-			*/
+			
         }
 		return new TaskIterator();
 	}
