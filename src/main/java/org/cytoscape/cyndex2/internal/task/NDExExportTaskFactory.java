@@ -95,7 +95,7 @@ public class NDExExportTaskFactory implements NetworkViewTaskFactory, NetworkTas
 		}
 	}
 	
-	private AbstractTask getTaskWrapper(CyNetwork network, boolean writeCollection) {
+	protected AbstractTask getTaskWrapper(CyNetwork network, boolean writeCollection) {
 		
 		AbstractTask wrapper = new AbstractTask() {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
