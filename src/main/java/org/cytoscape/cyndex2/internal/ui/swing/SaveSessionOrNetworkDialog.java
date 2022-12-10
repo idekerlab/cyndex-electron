@@ -9,30 +9,37 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableRowSorter;
 import org.cytoscape.cyndex2.internal.util.ErrorMessage;
 import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 import org.ndexbio.model.exceptions.NdexException;
 
 import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 
@@ -88,6 +95,11 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	JTextField _ndexSaveAsTextField;
 	private String _selectedCard;
 	private String _initialNetworkName;
+	
+	private int _selectedNDExNetworkIndex = -1;
+	private int _selectedNDExSearchNetworkIndex = -1;
+	private NetworkSummaryTableModel _myNetSummaryTableModel;
+	private TableRowSorter _myNetworksTableSorter;
 	
 	public SaveSessionOrNetworkDialog(){
 		_guiLoaded = false;
@@ -181,10 +193,17 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		if (getSelectedCard() == null){
 			return null;
 		}
+		
 		if (getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
-			return null;
+			if (_selectedNDExNetworkIndex != -1 && _selectedNDExNetworkIndex < _myNetSummaryTableModel.getRowCount()){
+				return _myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
+			}
 		}
 		return null;
+	}
+	
+	public String getDesiredNetworkName(){
+		return _ndexSaveAsTextField.getText();
 	}
 	
 	/**
@@ -396,7 +415,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		c.anchor = GridBagConstraints.WEST;
 		c.gridx = 1;
 		c.gridy = 0;
-		c.ipadx = 150;
+		c.ipadx = 200;
 		c.weightx = 0.5;
 		topPanel.add(new JLabel(""), c);
 		
@@ -413,23 +432,109 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return topPanel;
 	}
 	
+	private JTable getMyNetworksJTable(){
+		_myNetSummaryTableModel = new NetworkSummaryTableModel(new ArrayList<>(), null, true);
+
+		JTable myNetworksTable = new JTable(_myNetSummaryTableModel);
+		_myNetworksTableSorter = new TableRowSorter<NetworkSummaryTableModel>(_myNetSummaryTableModel);
+		//myNetworksTable.setAutoCreateRowSorter(true);
+		myNetworksTable.setRowSorter(_myNetworksTableSorter);
+		myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 150));
+        myNetworksTable.setFillsViewportHeight(true);
+		myNetworksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		myNetworksTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+        public void valueChanged(ListSelectionEvent event) {
+				// do some actions here, for example
+				// print first column value from selected row
+				
+				if (myNetworksTable.getSelectedRow() == -1){
+					System.out.println("Nothing selected");
+					//_mainSaveButton.setEnabled(false);
+					_selectedNDExNetworkIndex = -1;
+					_ndexSaveAsTextField.setText("");
+				} else {
+					System.out.println(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
+					_selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
+					_ndexSaveAsTextField.setText(_myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
+					//_mainSaveButton.setEnabled(true);
+				}
+			}
+        });
+		myNetworksTable.addMouseListener(new MouseAdapter() {
+         public void mouseClicked(MouseEvent me) {
+            if (me.getClickCount() == 2) {     // to detect double click events
+               JTable target = (JTable)me.getSource();
+               int row = target.getSelectedRow(); // select a row
+			   if (row != -1){
+	               System.out.println("Double click: " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
+				   _selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
+				   _ndexSaveAsTextField.setText(_myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
+				   _mainSaveButton.doClick();
+			   }
+			   
+            }
+         }
+		});
+		
+		//populate the table
+		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
+		if (selectedServer.getUsername() != null){
+			try {
+				_myNetSummaryTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
+			} catch (IOException | NdexException e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(this,
+						ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
+						JOptionPane.ERROR_MESSAGE);
+				}
+		}
+		return myNetworksTable;
+	}
+	
+	private void newMyNetworksTableSorterFilter(){
+		RowFilter<NetworkSummaryTableModel, Object> rf = null;
+		// if current expression fails do not update
+		try {
+			rf = RowFilter.regexFilter(_ndexSaveAsTextField.getText(), 0);
+		} catch(java.util.regex.PatternSyntaxException e){
+			return;
+		}
+		_myNetworksTableSorter.setRowFilter(rf);
+	}
+	
 	private void createNDExPanel(){
 		_ndexPanel = new JPanel();
 		_ndexPanel.setPreferredSize(_ndexPanelDimension);
 	
-		Dimension fillerDim = new Dimension(_ndexPanelDimension.width, 50);
-		_ndexPanel.add(new Box.Filler(fillerDim, fillerDim, fillerDim), BorderLayout.PAGE_START);
-		
 		JPanel saveAsPanel = new JPanel();
 		JLabel saveAsLabel = new JLabel("<html><font color=\"#000000\">Save As:</font></html>");
 		saveAsPanel.add(saveAsLabel, BorderLayout.LINE_START);
 		_ndexSaveAsTextField = new JTextField(_initialNetworkName);
 		_ndexSaveAsTextField.setPreferredSize(new Dimension(300, 25));
+		_ndexSaveAsTextField.getDocument().addDocumentListener(new DocumentListener(){
+				@Override
+				public void insertUpdate(DocumentEvent e){
+					//newMyNetworksTableSorterFilter();
+					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
+				}
+				@Override
+				public void removeUpdate(DocumentEvent e){
+					//newMyNetworksTableSorterFilter();
+					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
+					
+				}
+				@Override
+				public void changedUpdate(DocumentEvent e){
+					//newMyNetworksTableSorterFilter();
+					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
+				}
+			});
 		saveAsPanel.add(_ndexSaveAsTextField, BorderLayout.LINE_END);
 		_ndexPanel.add(saveAsPanel, BorderLayout.PAGE_START);
-				
-		fillerDim = new Dimension(_ndexPanelDimension.width, 50);
-		_ndexPanel.add(new Box.Filler(fillerDim, fillerDim, fillerDim), BorderLayout.PAGE_START);
+		JScrollPane scrollPane = new JScrollPane(getMyNetworksJTable());
+		scrollPane.setPreferredSize(new Dimension(570,150));
+		_ndexPanel.add(scrollPane, BorderLayout.PAGE_START);
+		
 		
 		_locationLabel = new JLabel("");
 		if (ServerManager.INSTANCE.getSelectedServer() != null){
