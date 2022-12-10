@@ -367,7 +367,6 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		
 		createJFileChooser();
 		
-		System.out.println("Created file chooser...: " + _sessionChooser.getControlButtonsAreShown());
 		CardLayout cl = (CardLayout)_cards.getLayout();
 		
 		_cards.add(_sessionChooser, OpenSessionOrNetworkDialog.OPEN_SESSION);
@@ -377,7 +376,6 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		createNDExPanel();
 		_cards.add(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
 		cl.addLayoutComponent(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
-		System.out.println("Does this change appear");
 		
 		return _cards;
 	}
