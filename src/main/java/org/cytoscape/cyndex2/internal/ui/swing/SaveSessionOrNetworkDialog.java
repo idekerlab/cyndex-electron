@@ -491,6 +491,11 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return myNetworksTable;
 	}
 	
+	/**
+	 * Filters networks table with regex set to value of ndex save as text field
+	 * This has problems if one has regex characters in filename cause things
+	 * will not match. There is also a concurrent modification issue
+	 */
 	private void newMyNetworksTableSorterFilter(){
 		RowFilter<NetworkSummaryTableModel, Object> rf = null;
 		// if current expression fails do not update
@@ -514,6 +519,9 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		_ndexSaveAsTextField.getDocument().addDocumentListener(new DocumentListener(){
 				@Override
 				public void insertUpdate(DocumentEvent e){
+					// @TODO need to figure out how to filter
+					// the results by value in save as text field without
+					// causing concurrent modification exceptions
 					//newMyNetworksTableSorterFilter();
 					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 				}
