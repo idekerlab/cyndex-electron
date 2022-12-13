@@ -398,6 +398,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	}
 	
 	private JPanel getNDExSignInPanel(){
+		// @TODO Put this at top of dialog to match open
 		JPanel topPanel = new JPanel(new GridBagLayout());
 		topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
 		topPanel.setPreferredSize(new Dimension(_ndexPanelDimension.width, 50));
@@ -555,6 +556,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		
 
 		JPanel signedInPanel = getNDExSignInPanel();
+		// @TODO Put sign in at top of dialog to match open
 		_ndexPanel.add(signedInPanel, BorderLayout.PAGE_START);
 	}
 	

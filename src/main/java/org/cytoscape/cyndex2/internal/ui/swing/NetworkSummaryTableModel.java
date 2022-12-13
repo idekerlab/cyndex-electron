@@ -26,6 +26,12 @@ import org.cytoscape.util.swing.TextIcon;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.object.network.VisibilityType;
 
+/**
+ * TODO: hide: owner, node and column count
+ *       also adjust modified to match NDEx: 12/13/22 6:42 AM
+ *       but need to make owner visible for search networks 
+ * @author churas
+ */
 public class NetworkSummaryTableModel extends AbstractTableModel {
 
 	public static final int IMPORT_COL = 0;
@@ -72,6 +78,10 @@ public class NetworkSummaryTableModel extends AbstractTableModel {
 			super();
 		}
 
+		/**
+		 *  TODO modify to match NDEx: 12/13/22 6:42 AM
+		 * @param value 
+		 */
 		public void setValue(Object value) {
 			if (formatter == null) {
 				formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.getDefault());
