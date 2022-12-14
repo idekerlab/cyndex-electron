@@ -14,6 +14,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -22,7 +23,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -32,16 +32,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.cytoscape.cyndex2.internal.ui.swing.ModalProgressHelper;
-import org.cytoscape.cyndex2.internal.ui.swing.NetworkSummaryTableModel;
-import org.cytoscape.cyndex2.internal.ui.swing.SignInButtonHelper;
 import org.cytoscape.cyndex2.internal.util.ErrorMessage;
 import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 import org.ndexbio.model.exceptions.NdexException;
-import org.ndexbio.model.object.NetworkSearchResult;
 import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,8 +91,8 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private String _selectedCard;
 	private int _selectedNDExNetworkIndex = -1;
 	private int _selectedNDExSearchNetworkIndex = -1;
-	NetworkSummaryTableModel _myNetSummaryTable;
-	NetworkSummaryTableModel _searchNetSummaryTable;
+	MyNetworksWithOwnerTableModel _myNetSummaryTable;
+	MyNetworksWithOwnerTableModel _searchNetSummaryTable;
 	private JTextField _ndexMyNetworksSearchField;
 	private JTextField _ndexSearchField;
 	private JButton _ndexMyNetworksSearchButton;
@@ -136,7 +131,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		if (_guiLoaded == false){
 			_mainOpenButton = new JButton("Open");
 			_mainCancelButton = new JButton("Cancel");
-			_searchNetSummaryTable = new NetworkSummaryTableModel(new ArrayList<>(), null, true);
+			_searchNetSummaryTable = new MyNetworksWithOwnerTableModel(new ArrayList<>());
 			this.add(getOpenPanel());
 			this.invalidate();
 			
@@ -381,7 +376,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 	}
 	
 	private void createNDExMyNetworksTabbedPane(){
-		_myNetSummaryTable = new NetworkSummaryTableModel(new ArrayList<>(), null, true);
+		_myNetSummaryTable = new MyNetworksWithOwnerTableModel(new ArrayList<>());
 
 		JTable myNetworksTable = new JTable(_myNetSummaryTable);
 		myNetworksTable.setAutoCreateRowSorter(true);
@@ -389,6 +384,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
         myNetworksTable.setFillsViewportHeight(true);
 		
 		myNetworksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		myNetworksTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
 		myNetworksTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent event) {
 				// do some actions here, for example
@@ -471,6 +467,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		searchTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
         searchTable.setFillsViewportHeight(true);
 		searchTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		searchTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
 		searchTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent event) {
 				// do some actions here, for example

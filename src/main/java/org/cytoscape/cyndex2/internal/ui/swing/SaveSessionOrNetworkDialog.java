@@ -15,6 +15,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -90,7 +91,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private Color _NDExButtonBlue = new Color(0,255, 255);
 	private Color _SessionButtonOrange = new Color(255,213,128);
 	private Color _defaultButtonColor;
-	private JLabel _locationLabel;
 	private JButton _ndexSignInButton;
 	JTextField _ndexSaveAsTextField;
 	private String _selectedCard;
@@ -98,7 +98,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	
 	private int _selectedNDExNetworkIndex = -1;
 	private int _selectedNDExSearchNetworkIndex = -1;
-	private NetworkSummaryTableModel _myNetSummaryTableModel;
+	private MyNetworksTableModel _myNetworksTableModel;
 	private TableRowSorter _myNetworksTableSorter;
 	
 	public SaveSessionOrNetworkDialog(){
@@ -195,8 +195,8 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		}
 		
 		if (getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
-			if (_selectedNDExNetworkIndex != -1 && _selectedNDExNetworkIndex < _myNetSummaryTableModel.getRowCount()){
-				return _myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
+			if (_selectedNDExNetworkIndex != -1 && _selectedNDExNetworkIndex < _myNetworksTableModel.getRowCount()){
+				return _myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
 			}
 		}
 		return null;
@@ -398,7 +398,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	}
 	
 	private JPanel getNDExSignInPanel(){
-		// @TODO Put this at top of dialog to match open
 		JPanel topPanel = new JPanel(new GridBagLayout());
 		topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
 		topPanel.setPreferredSize(new Dimension(_ndexPanelDimension.width, 50));
@@ -434,15 +433,17 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	}
 	
 	private JTable getMyNetworksJTable(){
-		_myNetSummaryTableModel = new NetworkSummaryTableModel(new ArrayList<>(), null, true);
+		_myNetworksTableModel = new MyNetworksTableModel(new ArrayList<>());
 
-		JTable myNetworksTable = new JTable(_myNetSummaryTableModel);
-		_myNetworksTableSorter = new TableRowSorter<NetworkSummaryTableModel>(_myNetSummaryTableModel);
+		JTable myNetworksTable = new JTable(_myNetworksTableModel);
+		
+		_myNetworksTableSorter = new TableRowSorter<MyNetworksTableModel>(_myNetworksTableModel);
 		//myNetworksTable.setAutoCreateRowSorter(true);
 		myNetworksTable.setRowSorter(_myNetworksTableSorter);
 		myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 150));
         myNetworksTable.setFillsViewportHeight(true);
 		myNetworksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		myNetworksTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
 		myNetworksTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent event) {
 				// do some actions here, for example
@@ -452,11 +453,11 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 					System.out.println("Nothing selected");
 					//_mainSaveButton.setEnabled(false);
 					_selectedNDExNetworkIndex = -1;
-					_ndexSaveAsTextField.setText("");
+					//_ndexSaveAsTextField.setText("");
 				} else {
 					System.out.println(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
 					_selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
-					_ndexSaveAsTextField.setText(_myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
+					//_ndexSaveAsTextField.setText(_myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
 					//_mainSaveButton.setEnabled(true);
 				}
 			}
@@ -469,8 +470,8 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 			   if (row != -1){
 	               System.out.println("Double click: " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
 				   _selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
-				   _ndexSaveAsTextField.setText(_myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
-				   _mainSaveButton.doClick();
+				   _ndexSaveAsTextField.setText(_myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
+				   //_mainSaveButton.doClick();
 			   }
 			   
             }
@@ -481,7 +482,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
 		if (selectedServer.getUsername() != null){
 			try {
-				_myNetSummaryTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
+				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
 			} catch (IOException | NdexException e) {
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(this,
@@ -492,16 +493,34 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return myNetworksTable;
 	}
 	
+	private RowFilter<MyNetworksTableModel, Object> getStringMatchRowFilter(final String saveAsText){
+		return new RowFilter<MyNetworksTableModel, Object>(){
+			@Override
+			public boolean include(Entry<? extends MyNetworksTableModel, ? extends Object> entry){
+				int rowID = (Integer)entry.getIdentifier();
+				MyNetworksTableModel model = entry.getModel();
+				String networkName = (String)model.getValueAt(rowID, 0);
+				if (networkName == null && (saveAsText == null || saveAsText.trim().isEmpty())){
+					return true;
+				}
+				if (networkName != null && networkName.contains(saveAsText)){
+					return true;
+				}
+				return false;
+			}
+		};
+	}
+	
 	/**
 	 * Filters networks table with regex set to value of ndex save as text field
 	 * This has problems if one has regex characters in filename cause things
 	 * will not match. There is also a concurrent modification issue
 	 */
 	private void newMyNetworksTableSorterFilter(){
-		RowFilter<NetworkSummaryTableModel, Object> rf = null;
+		RowFilter<MyNetworksTableModel, Object> rf = null;
 		// if current expression fails do not update
 		try {
-			rf = RowFilter.regexFilter(_ndexSaveAsTextField.getText(), 0);
+			rf = getStringMatchRowFilter(_ndexSaveAsTextField.getText());
 		} catch(java.util.regex.PatternSyntaxException e){
 			return;
 		}
@@ -511,6 +530,9 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private void createNDExPanel(){
 		_ndexPanel = new JPanel();
 		_ndexPanel.setPreferredSize(_ndexPanelDimension);
+		
+		// add NDEx sign in panel to top of dialog
+		_ndexPanel.add(getNDExSignInPanel(), BorderLayout.PAGE_START);
 	
 		JPanel saveAsPanel = new JPanel();
 		JLabel saveAsLabel = new JLabel("<html><font color=\"#000000\">Save As:</font></html>");
@@ -523,18 +545,18 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 					// @TODO need to figure out how to filter
 					// the results by value in save as text field without
 					// causing concurrent modification exceptions
-					//newMyNetworksTableSorterFilter();
+					newMyNetworksTableSorterFilter();
 					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 				}
 				@Override
 				public void removeUpdate(DocumentEvent e){
-					//newMyNetworksTableSorterFilter();
+					newMyNetworksTableSorterFilter();
 					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 					
 				}
 				@Override
 				public void changedUpdate(DocumentEvent e){
-					//newMyNetworksTableSorterFilter();
+					newMyNetworksTableSorterFilter();
 					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 				}
 			});
@@ -543,31 +565,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		JScrollPane scrollPane = new JScrollPane(getMyNetworksJTable());
 		scrollPane.setPreferredSize(new Dimension(570,150));
 		_ndexPanel.add(scrollPane, BorderLayout.PAGE_START);
-		
-		
-		_locationLabel = new JLabel("");
-		if (ServerManager.INSTANCE.getSelectedServer() != null){
-			updateLocationLabel(ServerManager.INSTANCE.getSelectedServer().getUrl());
-		} else {
-			updateLocationLabel(null);
-		}
-		_locationLabel.setPreferredSize(new Dimension(saveAsPanel.getPreferredSize().width-10, 25));
-		_ndexPanel.add(_locationLabel, BorderLayout.PAGE_START);
-		
-
-		JPanel signedInPanel = getNDExSignInPanel();
-		// @TODO Put sign in at top of dialog to match open
-		_ndexPanel.add(signedInPanel, BorderLayout.PAGE_START);
-	}
-	
-	private void updateLocationLabel(final String newLocation){
-		String nLocation;
-		if (newLocation == null){
-			nLocation = "unset";
-		} else {
-			nLocation = newLocation;
-		}
-		_locationLabel.setText("<html><font color=\"#808080\">Location: " + nLocation + "</font></html>");
 	}
 	
 	/**
@@ -582,11 +579,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		if (isVisible()) {
 			ModalProgressHelper.runWorker(null, "Loading Profile", () -> {
 				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
-				if (ServerManager.INSTANCE.getSelectedServer() != null){
-					updateLocationLabel(ServerManager.INSTANCE.getSelectedServer().getUrl());
-				} else {
-					updateLocationLabel(null);
-		}
 				return 1;
 			});
 		}
