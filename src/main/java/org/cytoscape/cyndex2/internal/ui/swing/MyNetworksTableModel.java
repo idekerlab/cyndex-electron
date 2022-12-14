@@ -15,10 +15,11 @@ public class MyNetworksTableModel extends AbstractTableModel {
 
 	public static final int NAME_COL = 0;
 	public static final int MODIFIED_COL = 1;
+	
+	public static final String NAME_COL_LABEL = "name";
+	public static final String MODIFIED_COL_LABEL = "modified";
 
-	private List<NetworkSummary> networkSummaries;
-
-	private boolean hideImportColumn;
+	protected List<NetworkSummary> networkSummaries;
 	
 	public MyNetworksTableModel(List<NetworkSummary> networkSummaries) {
 		this.networkSummaries = new ArrayList<NetworkSummary>(networkSummaries);
@@ -50,11 +51,7 @@ public class MyNetworksTableModel extends AbstractTableModel {
 
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
-		int columnIndexAdjusted = columnIndex;
-		if (this.hideImportColumn == true){
-			columnIndexAdjusted++;
-		}
-		switch (columnIndexAdjusted) {
+		switch (columnIndex) {
 		case NAME_COL:
 			return String.class;
 		case MODIFIED_COL:
@@ -81,9 +78,9 @@ public class MyNetworksTableModel extends AbstractTableModel {
 	public String getColumnName(int columnIndex) {
 		switch (columnIndex) {
 		case NAME_COL:
-			return "name";
+			return NAME_COL_LABEL;
 		case MODIFIED_COL:
-			return "modified";
+			return MODIFIED_COL_LABEL;
 		default:
 			throw new IllegalArgumentException("Column at index " + columnIndex + " does not exist.");
 		}

@@ -2,41 +2,23 @@ package org.cytoscape.cyndex2.internal.ui.swing;
 
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
-import javax.swing.table.AbstractTableModel;
 import org.ndexbio.model.object.network.NetworkSummary;
 
 /**
  * 
  * @author churas
  */
-public class MyNetworksWithOwnerTableModel extends AbstractTableModel {
+public class MyNetworksWithOwnerTableModel extends MyNetworksTableModel {
 
 	public static final int NAME_COL = 0;
 	public static final int OWNER_COL = 1;
 	public static final int MODIFIED_COL = 2;
-
-	private List<NetworkSummary> networkSummaries;
-
-	private boolean hideImportColumn;
+	
+	public static final String OWNER_COL_LABEL = "owner";
 	
 	public MyNetworksWithOwnerTableModel(List<NetworkSummary> networkSummaries) {
-		this.networkSummaries = new ArrayList<NetworkSummary>(networkSummaries);
-	}
-	
-	public void replaceNetworkSummaries(List<NetworkSummary> networkSummaries){
-		this.networkSummaries = new ArrayList<>(networkSummaries);
-		this.fireTableDataChanged();
-	}
-	
-	public void clearNetworkSummaries(){
-		this.networkSummaries.clear();
-		this.fireTableDataChanged();
-	}
-	
-	public List<NetworkSummary> getNetworkSummaries(){
-		return networkSummaries;
+		super(networkSummaries);
 	}
 
 	@Override
@@ -51,11 +33,7 @@ public class MyNetworksWithOwnerTableModel extends AbstractTableModel {
 
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
-		int columnIndexAdjusted = columnIndex;
-		if (this.hideImportColumn == true){
-			columnIndexAdjusted++;
-		}
-		switch (columnIndexAdjusted) {
+		switch (columnIndex) {
 		case NAME_COL:
 			return String.class;
 		case OWNER_COL:
@@ -86,17 +64,13 @@ public class MyNetworksWithOwnerTableModel extends AbstractTableModel {
 	public String getColumnName(int columnIndex) {
 		switch (columnIndex) {
 		case NAME_COL:
-			return "name";
+			return NAME_COL_LABEL;
 		case OWNER_COL:
-			return "owner";
+			return OWNER_COL_LABEL;
 		case MODIFIED_COL:
-			return "modified";
+			return MODIFIED_COL_LABEL;
 		default:
 			throw new IllegalArgumentException("Column at index " + columnIndex + " does not exist.");
 		}
-	}
-
-	public boolean isCellEditable(int row, int column) {
-		return false;
 	}
 }
