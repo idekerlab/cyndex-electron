@@ -17,7 +17,6 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.work.AbstractTaskFactory;
-import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskIterator;
 
 /*
@@ -55,8 +54,9 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 	public SaveSessionOrNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, boolean alwaysPromptUser) {
 		this.serviceRegistrar = serviceRegistrar;
 		_alwaysPromptUser = alwaysPromptUser;
-		_dialog = new SaveSessionOrNetworkDialog();
 		_dialogUtil = new ShowDialogUtil();
+		_dialog = new SaveSessionOrNetworkDialog(_dialogUtil);
+		
 	}
 
 	public SaveSessionOrNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar) {
@@ -97,13 +97,13 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 					UpdateUtil.updateIsPossible(currentNetwork, savedUUID,
 							selectedServer.getModelAccessLayer().getNdexRestClient(), 
 							selectedServer.getModelAccessLayer());
-                                        NDExBasicSaveParameters params = new NDExBasicSaveParameters();
-                                        params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
-                                        params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
-                                        params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
-                                        params.metadata = new HashMap<>();
-                                        
-                                        NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
+					NDExBasicSaveParameters params = new NDExBasicSaveParameters();
+					params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
+					params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
+					params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
+					params.metadata = new HashMap<>();
+
+					NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
 					return fac.createTaskIterator(currentNetwork);
 				}
 			} catch(Exception ex){
@@ -140,9 +140,10 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
                                         params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
                                         params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
                                         params.metadata = new HashMap<>();
+				// Need to determine if an overwrite is desired
                                         
-                                        NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
-					return fac.createTaskIterator(currentNetwork);
+                NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
+				return fac.createTaskIterator(currentNetwork);
                                 
 			}
 			

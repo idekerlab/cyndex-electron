@@ -38,6 +38,27 @@ public class MyNetworksTableModel extends AbstractTableModel {
 	public List<NetworkSummary> getNetworkSummaries(){
 		return networkSummaries;
 	}
+	
+	public List<NetworkSummary> getNetworksMatchingName(final String name){
+		List<NetworkSummary> matchingNetworks = new ArrayList<>();
+		
+		for (NetworkSummary ns: networkSummaries){
+			if (ns.getName() == null && name == null){
+				matchingNetworks.add(ns);
+				continue;
+			}
+			if (ns.getName() == null && name != null){
+				continue;
+			}
+			if (ns.getName() != null && name == null){
+				continue;
+			}
+			if (ns.getName().equals(name)){
+				matchingNetworks.add(ns);
+			}
+		}
+		return matchingNetworks;
+	}
 
 	@Override
 	public int getColumnCount() {

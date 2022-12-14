@@ -91,7 +91,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private String _selectedCard;
 	private int _selectedNDExNetworkIndex = -1;
 	private int _selectedNDExSearchNetworkIndex = -1;
-	MyNetworksWithOwnerTableModel _myNetSummaryTable;
+	MyNetworksWithOwnerTableModel _myNetworksTableModel;
 	MyNetworksWithOwnerTableModel _searchNetSummaryTable;
 	private JTextField _ndexMyNetworksSearchField;
 	private JTextField _ndexSearchField;
@@ -190,7 +190,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		}
 		if (getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
 			if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
-				return _myNetSummaryTable.getNetworkSummaries().get(_selectedNDExNetworkIndex);
+				return _myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
 			}
 			if (_ndexTabbedPane.getSelectedIndex() == 1 && _selectedNDExSearchNetworkIndex != -1){
 				return _searchNetSummaryTable.getNetworkSummaries().get(_selectedNDExSearchNetworkIndex);
@@ -376,9 +376,9 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 	}
 	
 	private void createNDExMyNetworksTabbedPane(){
-		_myNetSummaryTable = new MyNetworksWithOwnerTableModel(new ArrayList<>());
+		_myNetworksTableModel = new MyNetworksWithOwnerTableModel(new ArrayList<>());
 
-		JTable myNetworksTable = new JTable(_myNetSummaryTable);
+		JTable myNetworksTable = new JTable(_myNetworksTableModel);
 		myNetworksTable.setAutoCreateRowSorter(true);
 		myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
         myNetworksTable.setFillsViewportHeight(true);
@@ -432,7 +432,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		_ndexMyNetworksSearchButton.addActionListener(new ActionListener(){
 			@Override
 			public void actionPerformed(ActionEvent e){
-				_myNetSummaryTable.clearNetworkSummaries();
+				_myNetworksTableModel.clearNetworkSummaries();
 				_selectedNDExNetworkIndex = -1;
 				if (_ndexMyNetworksSearchField.getText().length() == 0){
 					return;
@@ -628,13 +628,13 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 			ModalProgressHelper.runWorker(null, "Loading Profile", () -> {
 				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
 				Server selectedServer = ServerManager.INSTANCE.getServer();
-				_myNetSummaryTable.clearNetworkSummaries();
+				_myNetworksTableModel.clearNetworkSummaries();
 
 				// If the username is not null assume we have a valid account and 
 				// fill the my networks table with data
 				if (selectedServer.getUsername() != null){
 					try {
-						_myNetSummaryTable.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
+						_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
 					} catch (IOException | NdexException e) {
 						e.printStackTrace();
 						JOptionPane.showMessageDialog(this,

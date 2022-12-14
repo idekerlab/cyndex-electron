@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -100,9 +101,13 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private int _selectedNDExSearchNetworkIndex = -1;
 	private MyNetworksTableModel _myNetworksTableModel;
 	private TableRowSorter _myNetworksTableSorter;
+	private ShowDialogUtil _dialogUtil;
+	private NetworkSummary _ndexNetworkToOverwrite;
 	
-	public SaveSessionOrNetworkDialog(){
+	public SaveSessionOrNetworkDialog(ShowDialogUtil dialogUtil){
 		_guiLoaded = false;
+		_dialogUtil = dialogUtil;
+		_ndexNetworkToOverwrite = null;
 	}
 	
 	public void setInitialNetworkName(final String name){
@@ -145,6 +150,40 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         JOptionPane pane = getOptionPane((JComponent)e.getSource());
+						List<NetworkSummary> matchingNetworks = SaveSessionOrNetworkDialog.this._myNetworksTableModel.getNetworksMatchingName(_ndexSaveAsTextField.getText());
+						
+						if (matchingNetworks != null && matchingNetworks.size() > 0){
+							if (matchingNetworks.size() == 1 || SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
+								
+								NetworkSummary selectedNetwork = null;
+								if (SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
+									selectedNetwork = SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork();
+								} else {
+									selectedNetwork = matchingNetworks.get(0);
+								}
+								//user selected a network so lets verify they want to overwrite
+								Object[] options = {"Yes", "No"};
+								int res = _dialogUtil.showOptionDialog(pane, "Overwrite:",
+										"Do you wish to overwrite " + 
+												selectedNetwork.getName() + "?",
+										JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+										options, options[1]);
+								if (res == 1){
+									System.out.println("User did not want to overwrite. just return");
+									_ndexNetworkToOverwrite = null;
+									return;
+								}
+								if (res == 0){
+									System.out.println("User does want to overwrite");
+									_ndexNetworkToOverwrite = selectedNetwork;
+									pane.setValue(_mainSaveButton);
+								}
+							}
+							_dialogUtil.showMessageDialog(SaveSessionOrNetworkDialog.this, Integer.toString(matchingNetworks.size()) + " networks match that name");
+							return;
+						}
+						// TODO need to pop up dialog to verify an overwrite of a network
+						// if detected
                         pane.setValue(_mainSaveButton);
                     }
                 });
@@ -162,7 +201,12 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
 			_guiLoaded = true;
 		}
+		_ndexNetworkToOverwrite = null;
 		return true;
+	}
+	
+	public NetworkSummary getNDExNetworkUserWantsToOverwrite(){
+		return _ndexNetworkToOverwrite;
 	}
 	
 	/**
@@ -579,6 +623,23 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		if (isVisible()) {
 			ModalProgressHelper.runWorker(null, "Loading Profile", () -> {
 				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
+				System.out.println("Change to sign in credentials: " + arg0.toString());
+				Server selectedServer = ServerManager.INSTANCE.getServer();
+
+				_myNetworksTableModel.clearNetworkSummaries();
+
+				// If the username is not null assume we have a valid account and 
+				// fill the my networks table with data
+				if (selectedServer.getUsername() != null){
+					try {
+						_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
+					} catch (IOException | NdexException e) {
+						e.printStackTrace();
+						JOptionPane.showMessageDialog(this,
+							ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
+							JOptionPane.ERROR_MESSAGE);
+					}
+				}
 				return 1;
 			});
 		}
