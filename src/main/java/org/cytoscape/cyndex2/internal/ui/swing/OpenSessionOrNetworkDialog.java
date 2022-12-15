@@ -151,12 +151,16 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
                         pane.setValue(_mainCancelButton);
                     }
                 });
-			_openSessionButton.doClick();
 			
+			// TODO: need to remember desired behavior via preferences
+			//_openSessionButton.doClick();
+			_openNDExButton.doClick();
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
 			_guiLoaded = true;
-		}
+		} 
+		updateMyNetworksTable();
+
 		return true;
 	}
 	
@@ -555,7 +559,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 	 */
 	private JPanel getNDExSignInPanel(){
 		JPanel topPanel = new JPanel(new GridBagLayout());
-		topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
+		//topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
 		topPanel.setPreferredSize(new Dimension(_ndexPanelDimension.width, 50));
 
 		GridBagConstraints c = new GridBagConstraints();
@@ -616,6 +620,23 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		createNDExSearchAllTabbedPane();
 	}
 	
+	private void updateMyNetworksTable(){
+		if (_myNetworksTableModel == null){
+			return;
+		}
+		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
+		if (selectedServer.getUsername() != null){
+			try {
+				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
+			} catch (IOException | NdexException e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(this,
+						ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
+						JOptionPane.ERROR_MESSAGE);
+				}
+		}
+	}
+	
 	/**
 	 * This should be registered with ServerManager and will be notified
 	 * when the user updates sign in credentials so we know to do a search
@@ -629,19 +650,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
 				Server selectedServer = ServerManager.INSTANCE.getServer();
 				_myNetworksTableModel.clearNetworkSummaries();
-
-				// If the username is not null assume we have a valid account and 
-				// fill the my networks table with data
-				if (selectedServer.getUsername() != null){
-					try {
-						_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
-					} catch (IOException | NdexException e) {
-						e.printStackTrace();
-						JOptionPane.showMessageDialog(this,
-							ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
-							JOptionPane.ERROR_MESSAGE);
-					}
-				}
+				updateMyNetworksTable();
 				return 1;
 			});
 		}
