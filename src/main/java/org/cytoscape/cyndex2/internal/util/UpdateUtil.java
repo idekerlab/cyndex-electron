@@ -5,8 +5,13 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.cytoscape.cyndex2.internal.CyActivator;
 import org.cytoscape.cyndex2.internal.CyServiceModule;
+import org.cytoscape.cyndex2.internal.errors.CheckPermissionException;
+import org.cytoscape.cyndex2.internal.errors.NetworkNotFoundInNDExException;
+import org.cytoscape.cyndex2.internal.errors.ReadOnlyException;
+import org.cytoscape.cyndex2.internal.errors.ReadPermissionException;
+import org.cytoscape.cyndex2.internal.errors.RemoteModificationException;
+import org.cytoscape.cyndex2.internal.errors.WritePermissionException;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.model.subnetwork.CyRootNetwork;
@@ -43,20 +48,20 @@ public class UpdateUtil {
 			final NdexRestClientModelAccessLayer mal, final boolean checkTimestamp) throws Exception {
 
 		if (uuid == null) {
-			throw new Exception("UUID unknown. Can't find current Network in NDEx.");
+			throw new NetworkNotFoundInNDExException("UUID unknown. Can't find current Network in NDEx.");
 		}
 
 		try {
 
 			Map<String, Permissions> permissionTable = mal.getUserNetworkPermission(nc.getUserUid(), uuid, false);
 			if (permissionTable == null || permissionTable.size() == 0) {
-				throw new Exception("Cannot find network.");
+				throw new NetworkNotFoundInNDExException("Cannot find network.");
 			} else if (permissionTable.get(uuid.toString()) == Permissions.READ) {
-				throw new Exception("You don't have permission to write to this network.");
+				throw new WritePermissionException("You don't have permission to write to this network.");
 			}
 
 		} catch (IOException | NdexException e) {
-			throw new Exception("Unable to read network permissions. " + e.getMessage());
+			throw new ReadPermissionException("Unable to read network permissions. " + e.getMessage());
 		}
 
 		NetworkSummary ns = null;
@@ -64,7 +69,7 @@ public class UpdateUtil {
 			ns = mal.getNetworkSummaryById(uuid);
 
 			if (ns.getIsReadOnly())
-				throw new Exception("The network is read only.");
+				throw new ReadOnlyException("The network is read only.");
 
 			if (checkTimestamp) {
 
@@ -78,11 +83,11 @@ public class UpdateUtil {
 				final int timestampCompare = serverTimestamp.compareTo(localTimestamp);
 
 				if (timestampCompare > 0) {
-					throw new Exception("Network was modified on remote server.");
+					throw new RemoteModificationException("Network was modified on remote server.", serverTimestamp);
 				}
 			}
 		} catch (IOException | NdexException e) {
-			throw new Exception("An error occurred while checking permissions. " + e.getMessage());
+			throw new CheckPermissionException("An error occurred while checking permissions. " + e.getMessage());
 		}
 
 		return uuid;
