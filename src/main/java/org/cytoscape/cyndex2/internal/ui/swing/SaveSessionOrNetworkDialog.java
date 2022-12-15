@@ -75,8 +75,8 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	public final static String SAVE_NDEX = "SaveNDEx";
 	private boolean _guiLoaded;
 	private JPanel _cards;
-	private JButton _openSessionButton;
-	private JButton _openNDExButton;
+	private JButton _saveSessionButton;
+	private JButton _saveNDExButton;
 	private JButton _mainSaveButton;
 	private JButton _mainCancelButton;
 	private JFileChooser _sessionChooser;
@@ -150,40 +150,46 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         JOptionPane pane = getOptionPane((JComponent)e.getSource());
-						List<NetworkSummary> matchingNetworks = SaveSessionOrNetworkDialog.this._myNetworksTableModel.getNetworksMatchingName(_ndexSaveAsTextField.getText());
-						
-						if (matchingNetworks != null && matchingNetworks.size() > 0){
-							if (matchingNetworks.size() == 1 || SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
-								
-								NetworkSummary selectedNetwork = null;
-								if (SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
-									selectedNetwork = SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork();
-								} else {
-									selectedNetwork = matchingNetworks.get(0);
+						if (_selectedCard == SaveSessionOrNetworkDialog.SAVE_NDEX){
+							List<NetworkSummary> matchingNetworks = SaveSessionOrNetworkDialog.this._myNetworksTableModel.getNetworksMatchingName(_ndexSaveAsTextField.getText());
+
+							if (matchingNetworks != null && matchingNetworks.size() > 0){
+								if (matchingNetworks.size() == 1 || SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
+
+									NetworkSummary selectedNetwork = null;
+									if (SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
+										selectedNetwork = SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork();
+									} else {
+										selectedNetwork = matchingNetworks.get(0);
+									}
+									String netName = selectedNetwork.getName() == null ? "" : selectedNetwork.getName(); 
+									//user selected a network so lets verify they want to overwrite
+									Object[] options = {"Yes", "No"};
+									int res = _dialogUtil.showOptionDialog(pane, "Do you wish to overwrite " + 
+													netName + "?","Overwrite:",
+											JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+											options, options[1]);
+									if (res == 1){
+										System.out.println("User did not want to overwrite. just return");
+										_ndexNetworkToOverwrite = null;
+										return;
+									}
+									if (res == 0){
+										System.out.println("User does want to overwrite");
+										_ndexNetworkToOverwrite = selectedNetwork;
+										// user does want to overwrite so click save button
+										pane.setValue(_mainSaveButton);
+										return;
+									}
 								}
-								String netName = selectedNetwork.getName() == null ? "" : selectedNetwork.getName(); 
-								//user selected a network so lets verify they want to overwrite
-								Object[] options = {"Yes", "No"};
-								int res = _dialogUtil.showOptionDialog(pane, "Do you wish to overwrite " + 
-												netName + "?","Overwrite:",
-										JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-										options, options[1]);
-								if (res == 1){
-									System.out.println("User did not want to overwrite. just return");
-									_ndexNetworkToOverwrite = null;
-									return;
+								if (SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() == null){
+									_dialogUtil.showMessageDialog(SaveSessionOrNetworkDialog.this, Integer.toString(matchingNetworks.size()) 
+											+ " networks match that name.\nPlease click ok and select one to overwrite or choose a different name");
 								}
-								if (res == 0){
-									System.out.println("User does want to overwrite");
-									_ndexNetworkToOverwrite = selectedNetwork;
-									pane.setValue(_mainSaveButton);
-								}
+								return;
 							}
-							_dialogUtil.showMessageDialog(SaveSessionOrNetworkDialog.this, Integer.toString(matchingNetworks.size()) + " networks match that name");
-							return;
 						}
-						// TODO need to pop up dialog to verify an overwrite of a network
-						// if detected
+						
                         pane.setValue(_mainSaveButton);
                     }
                 });
@@ -196,7 +202,9 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                         pane.setValue(_mainCancelButton);
                     }
                 });
-			_openSessionButton.doClick();
+			// TODO: Need to remember previous behavior via preferences
+			//_openSessionButton.doClick();
+			_saveNDExButton.doClick();
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
 			_guiLoaded = true;
@@ -254,6 +262,16 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return _ndexSaveAsTextField.getText();
 	}
 	
+	public void setDesiredNetworkName(final String desiredName){
+		if (_ndexSaveAsTextField != null){
+			_ndexSaveAsTextField.setText(desiredName);
+			
+			//should probably also refresh the network list at this time
+			updateMyNetworksTable();
+			
+		}
+	}
+	
 	/**
 	 * Gets the dialog where the save and cancel buttons reside so 
 	 * we can link the buttons to the dialog actions
@@ -286,11 +304,11 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		openDialogPanel.setPreferredSize(_dialogDimension);
         JPanel leftPanel = new JPanel();
         leftPanel.setPreferredSize(_leftPanelDimension);
-        _openNDExButton = new JButton("<html><font color=\"#000000\">Save Network<br/><br/><font size=\"-2\">Save the currently selected network to NDEx</font></font></html>");
-		_openNDExButton.setOpaque(true);
-        _openNDExButton.setPreferredSize(_leftButtonsDimensions);
-		_defaultButtonColor = _openNDExButton.getBackground();
-		_openNDExButton.addActionListener(new ActionListener() {
+        _saveNDExButton = new JButton("<html><font color=\"#000000\">Save Network<br/><br/><font size=\"-2\">Save the currently selected network to NDEx</font></font></html>");
+		_saveNDExButton.setOpaque(true);
+        _saveNDExButton.setPreferredSize(_leftButtonsDimensions);
+		_defaultButtonColor = _saveNDExButton.getBackground();
+		_saveNDExButton.addActionListener(new ActionListener() {
 			/**
 			 * When a user clicks on the open ndex button need to change
 			 * the background for the open ndex button and for open session 
@@ -301,22 +319,22 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 			public void actionPerformed(ActionEvent e){
 				CardLayout cl = (CardLayout)_cards.getLayout();
 				cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_NDEX);
-				_openNDExButton.setBackground(_NDExButtonBlue);
-				_openSessionButton.setBackground(_defaultButtonColor);
-				setButtonFocus(true, _openNDExButton);
-				setButtonFocus(false, _openSessionButton);
+				_saveNDExButton.setBackground(_NDExButtonBlue);
+				_saveSessionButton.setBackground(_defaultButtonColor);
+				setButtonFocus(true, _saveNDExButton);
+				setButtonFocus(false, _saveSessionButton);
 				_selectedCard = SaveSessionOrNetworkDialog.SAVE_NDEX;
 				_mainSaveButton.setEnabled(false);
 			}
 		});
 		
-        leftPanel.add(_openNDExButton, BorderLayout.PAGE_START);
+        leftPanel.add(_saveNDExButton, BorderLayout.PAGE_START);
 
-        _openSessionButton = new JButton("<html><font color=\"#000000\">Save Session<br/><br/><font size=\"-2\">Save a session (.cys) file on this computer</font></html>");
-		_openSessionButton.setOpaque(true);
-        _openSessionButton.setPreferredSize(_leftButtonsDimensions);
+        _saveSessionButton = new JButton("<html><font color=\"#000000\">Save Session<br/><br/><font size=\"-2\">Save a session (.cys) file on this computer</font></html>");
+		_saveSessionButton.setOpaque(true);
+        _saveSessionButton.setPreferredSize(_leftButtonsDimensions);
 
-        _openSessionButton.addActionListener(new ActionListener() {
+        _saveSessionButton.addActionListener(new ActionListener() {
                 /**
                  * When a user clicks on the save session button need to change
                  * the background for the save ndex button and for save session 
@@ -327,10 +345,10 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                 public void actionPerformed(ActionEvent e){
                         CardLayout cl = (CardLayout)_cards.getLayout();
                         cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_SESSION);
-                        _openNDExButton.setBackground(_defaultButtonColor);
-                        _openSessionButton.setBackground(_SessionButtonOrange);
-                        setButtonFocus(false, _openNDExButton);
-                        setButtonFocus(true, _openSessionButton);
+                        _saveNDExButton.setBackground(_defaultButtonColor);
+                        _saveSessionButton.setBackground(_SessionButtonOrange);
+                        setButtonFocus(false, _saveNDExButton);
+                        setButtonFocus(true, _saveSessionButton);
 
                         _selectedCard = SaveSessionOrNetworkDialog.SAVE_SESSION;
                         if (_saveAsTextField == null){
@@ -341,7 +359,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                 }
         });
 
-	leftPanel.add(_openSessionButton, BorderLayout.PAGE_END);
+	leftPanel.add(_saveSessionButton, BorderLayout.PAGE_END);
         openDialogPanel.add(leftPanel, BorderLayout.LINE_START);
 
         JPanel rightPanel = getRightCardPanel();
@@ -447,7 +465,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	
 	private JPanel getNDExSignInPanel(){
 		JPanel topPanel = new JPanel(new GridBagLayout());
-		topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
+		//topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
 		topPanel.setPreferredSize(new Dimension(_ndexPanelDimension.width, 50));
 
 		GridBagConstraints c = new GridBagConstraints();
@@ -527,6 +545,14 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		});
 		
 		//populate the table
+		updateMyNetworksTable();
+		return myNetworksTable;
+	}
+	
+	private void updateMyNetworksTable(){
+		if (_myNetworksTableModel == null){
+			return;
+		}
 		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
 		if (selectedServer.getUsername() != null){
 			try {
@@ -538,7 +564,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 						JOptionPane.ERROR_MESSAGE);
 				}
 		}
-		return myNetworksTable;
 	}
 	
 	private RowFilter<MyNetworksTableModel, Object> getStringMatchRowFilter(final String saveAsText){
@@ -632,18 +657,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 
 				_myNetworksTableModel.clearNetworkSummaries();
 
-				// If the username is not null assume we have a valid account and 
-				// fill the my networks table with data
-				if (selectedServer.getUsername() != null){
-					try {
-						_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
-					} catch (IOException | NdexException e) {
-						e.printStackTrace();
-						JOptionPane.showMessageDialog(this,
-							ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
-							JOptionPane.ERROR_MESSAGE);
-					}
-				}
+				updateMyNetworksTable();
 				return 1;
 			});
 		}
