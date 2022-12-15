@@ -18,6 +18,7 @@ import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
+import org.ndexbio.model.object.network.NetworkSummary;
 
 /*
  * #%L
@@ -141,10 +142,13 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
                                         params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
                                         params.metadata = new HashMap<>();
 				// Need to determine if an overwrite is desired
-                                        
-                NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
-				return fac.createTaskIterator(currentNetwork);
-                                
+                NetworkSummary overwriteNetwork = _dialog.getNDExNetworkUserWantsToOverwrite();
+				if (overwriteNetwork != null){
+					NDExNetworkManager.updateModificationTimeStamp(currentNetwork, overwriteNetwork.getModificationTime());
+				}
+				currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
+                NDExExportTaskFactory fac = new NDExExportTaskFactory(params, overwriteNetwork != null);
+				return fac.createTaskIterator(currentNetwork);   
 			}
 			
         }

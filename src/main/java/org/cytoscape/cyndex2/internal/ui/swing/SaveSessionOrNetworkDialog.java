@@ -161,11 +161,11 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 								} else {
 									selectedNetwork = matchingNetworks.get(0);
 								}
+								String netName = selectedNetwork.getName() == null ? "" : selectedNetwork.getName(); 
 								//user selected a network so lets verify they want to overwrite
 								Object[] options = {"Yes", "No"};
-								int res = _dialogUtil.showOptionDialog(pane, "Overwrite:",
-										"Do you wish to overwrite " + 
-												selectedNetwork.getName() + "?",
+								int res = _dialogUtil.showOptionDialog(pane, "Do you wish to overwrite " + 
+												netName + "?","Overwrite:",
 										JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
 										options, options[1]);
 								if (res == 1){
@@ -205,6 +205,10 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return true;
 	}
 	
+	/**
+	 * The NDEx network the user wishes to overwrite
+	 * @return Network to overwrite or null
+	 */
 	public NetworkSummary getNDExNetworkUserWantsToOverwrite(){
 		return _ndexNetworkToOverwrite;
 	}
