@@ -6,6 +6,8 @@ import java.util.UUID;
 import javax.swing.JOptionPane;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.cyndex2.internal.errors.NetworkNotFoundInNDExException;
+import org.cytoscape.cyndex2.internal.errors.RemoteModificationException;
 import org.cytoscape.cyndex2.internal.rest.parameter.NDExBasicSaveParameters;
 import org.cytoscape.cyndex2.internal.ui.swing.SaveSessionOrNetworkDialog;
 import org.cytoscape.cyndex2.internal.util.NDExNetworkManager;
@@ -66,8 +68,12 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 
 	@Override
 	public boolean isReady() {
-		//serviceRegistrar.getService(serviceClass)
-		return super.isReady(); //To change body of generated methods, choose Tools | Templates.
+		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
+		// check if network is already on NDEx and we have valid credentials...
+		if (appManager.getCurrentNetwork() != null){
+			return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -90,7 +96,7 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 		// check if network is already on NDEx and we have valid credentials...
 		CyNetwork currentNetwork = appManager.getCurrentNetwork();
 		UUID savedUUID = NDExNetworkManager.getUUID(currentNetwork);
-		if (savedUUID != null){
+		if (_alwaysPromptUser == false && savedUUID != null){
 			try {
 			
 				Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
@@ -107,17 +113,42 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 					NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
 					return fac.createTaskIterator(currentNetwork);
 				}
+			} catch(RemoteModificationException rme){
+					Object[] options = {"Yes", "No"};
+					int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(), "Network was modified on remote server.\n\n"
+							+ "Do you wish to overwrite anyways?",
+							"Overwrite",
+							JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+							options, options[1]);
+					if (res == 1){
+						System.out.println("User did not want to overwrite. just return");
+						return null;
+					}
+					if (res == 0){
+						System.out.println("User does want to overwrite");
+						NDExNetworkManager.updateModificationTimeStamp(currentNetwork, rme.getRemoteModification());
+				
+						currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
+						NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), true);
+						return fac.createTaskIterator(currentNetwork);
+					}
+			} catch(NetworkNotFoundInNDExException nfe){
+				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network is linked to network in NDEx, but that network\n("
+					+ savedUUID.toString()	+ ")\ndoes not exist on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server.\n\nClick ok to display Save Network As dialog");
 			} catch(Exception ex){
 				ex.printStackTrace();
-				// couldn't just save so dont and bring up the gui
-                                
+
+				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Save error, due to this error:\n\n"
+						+ ex.getMessage() + "\n\nGoing to bring up save as dialog, but let Chris know how you want to proceed?");         
 			}
 		}
 		
 		if (_dialog.createGUI() == false){
 			return new TaskIterator();
 		}
-		
+		String desiredRawName = currentNetwork.getRow(currentNetwork).get(CyNetwork.NAME, String.class);
+		String desiredName = desiredRawName == null ? "" : desiredRawName;
+		_dialog.setDesiredNetworkName(desiredName);
 		Object[] options = {_dialog.getMainSaveButton(), _dialog.getMainCancelButton()};
 		int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(),
                                            this._dialog,
@@ -133,25 +164,33 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 			if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_SESSION)){
 				File sessionFile = _dialog.getSelectedSessionFile();
 				if (sessionFile != null){
+					System.out.println("selected session file is: " + sessionFile.getAbsolutePath());
 					return new TaskIterator(1, new SaveSessionAsTask(sessionFile, serviceRegistrar));
+				} else {
+					System.out.println("selected session file is null");
 				}
 			} else if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
-				NDExBasicSaveParameters params = new NDExBasicSaveParameters();
-                                        params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
-                                        params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
-                                        params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
-                                        params.metadata = new HashMap<>();
+
 				// Need to determine if an overwrite is desired
                 NetworkSummary overwriteNetwork = _dialog.getNDExNetworkUserWantsToOverwrite();
 				if (overwriteNetwork != null){
 					NDExNetworkManager.updateModificationTimeStamp(currentNetwork, overwriteNetwork.getModificationTime());
 				}
 				currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
-                NDExExportTaskFactory fac = new NDExExportTaskFactory(params, overwriteNetwork != null);
+                NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), overwriteNetwork != null);
 				return fac.createTaskIterator(currentNetwork);   
 			}
 			
         }
 		return null;
+	}
+	
+	private NDExBasicSaveParameters getNDExBasicSaveParameters(){
+		NDExBasicSaveParameters params = new NDExBasicSaveParameters();
+                                        params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
+                                        params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
+                                        params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
+                                        params.metadata = new HashMap<>();
+		return params;
 	}
 }
