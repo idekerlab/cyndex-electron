@@ -193,7 +193,7 @@ public class CyActivator extends AbstractCyActivator {
 		
 		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFac = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar);
 		final Properties ndexSaveSessionOrNetworkTaskFactoryProps = new Properties();
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ID, "openSessionOrNetworkFromCloudTaskFactory");
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ID, "saveSessionOrNetworkToCloudTaskFactory");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TITLE, "Save Network ");
 		if (CyActivator.getHideOpenSaveMenuOptions() == true){
@@ -203,7 +203,16 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
 		registerService(bc, saveSessionOrNetworkFac, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryProps);
-
+		
+		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFacAlwaysPrompt = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar, true);
+		final Properties ndexSaveSessionOrNetworkTaskFactoryPropsPrompt = new Properties();
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(ID, "saveSessionOrNetworkToCloudAlwaysPromptTaskFactory");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(PREFERRED_MENU, "File");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TITLE, "Save Network As...");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(MENU_GRAVITY, "1.5");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
+		registerService(bc, saveSessionOrNetworkFacAlwaysPrompt, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryPropsPrompt);
 		
 		
 		// TF for NDEx Save Collection
