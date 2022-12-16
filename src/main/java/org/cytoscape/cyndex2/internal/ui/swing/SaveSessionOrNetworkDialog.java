@@ -35,14 +35,11 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableRowSorter;
-import org.cytoscape.cyndex2.internal.util.ErrorMessage;
-import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
-import org.ndexbio.model.exceptions.NdexException;
 
 import org.ndexbio.model.object.network.NetworkSummary;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * #%L
@@ -68,8 +65,8 @@ import org.ndexbio.model.object.network.NetworkSummary;
  * #L%
  */
 @SuppressWarnings("serial")
-public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChangeListener {
-	//private final static Logger LOGGER = LoggerFactory.getLogger(SaveDialog.class);
+public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
+	private final static Logger LOGGER = LoggerFactory.getLogger(SaveSessionOrNetworkDialog.class);
 	public final static String SAVE_SESSION = "SaveSession";
 	public final static String SAVE_NDEX = "SaveNDEx";
 	private boolean _guiLoaded;
@@ -82,31 +79,27 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private JTextField _saveAsTextField;
 	private JPanel _ndexPanel;
 	private JTabbedPane _ndexTabbedPane;
-	private Dimension _dialogDimension = new Dimension(800, 400);
-	private Dimension _leftPanelDimension = new Dimension(150, _dialogDimension.height);
-	private Dimension _leftButtonsDimensions = new Dimension(_leftPanelDimension.width-5,_leftPanelDimension.width-5);
-	private Dimension _rightPanelDimension = new Dimension(600, _dialogDimension.height-50);
-	private Dimension _ndexTopPanelDimension = new Dimension(_rightPanelDimension.width, 35);
-	private Dimension _ndexPanelDimension = new Dimension(_rightPanelDimension.width, 100);
-	private Color _NDExButtonBlue = new Color(0,255, 255);
-	private Color _SessionButtonOrange = new Color(255,213,128);
 	private Color _defaultButtonColor;
-	private JButton _ndexSignInButton;
 	JTextField _ndexSaveAsTextField;
 	private String _selectedCard;
 	private String _initialNetworkName;
 	
 	private int _selectedNDExNetworkIndex = -1;
 	private int _selectedNDExSearchNetworkIndex = -1;
-	private MyNetworksTableModel _myNetworksTableModel;
 	private TableRowSorter _myNetworksTableSorter;
 	private ShowDialogUtil _dialogUtil;
 	private NetworkSummary _ndexNetworkToOverwrite;
+	private boolean _enabledNDExSave;
 	
 	public SaveSessionOrNetworkDialog(ShowDialogUtil dialogUtil){
+		super();
 		_guiLoaded = false;
 		_dialogUtil = dialogUtil;
 		_ndexNetworkToOverwrite = null;
+	}
+	
+	public void setNDExSaveEnabled(boolean val){
+		_enabledNDExSave = val;
 	}
 	
 	public void setInitialNetworkName(final String name){
@@ -169,12 +162,13 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 											JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
 											options, options[1]);
 									if (res == 1){
-										System.out.println("User did not want to overwrite. just return");
+										LOGGER.debug("User did not want to overwrite. just return");
 										_ndexNetworkToOverwrite = null;
 										return;
 									}
 									if (res == 0){
-										System.out.println("User does want to overwrite");
+										LOGGER.debug("User does want to overwrite this network: "
+												+ selectedNetwork.getName() == null ? "" : selectedNetwork.getName());
 										_ndexNetworkToOverwrite = selectedNetwork;
 										// user does want to overwrite so click save button
 										pane.setValue(_mainSaveButton);
@@ -182,6 +176,8 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 									}
 								}
 								if (SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() == null){
+									LOGGER.debug("User wishes to save, but " + Integer.toString(matchingNetworks.size())
+											+ " networks match the name. Asking user to change name or select a network to overwrite");
 									_dialogUtil.showMessageDialog(SaveSessionOrNetworkDialog.this, Integer.toString(matchingNetworks.size()) 
 											+ " networks match that name.\nPlease click ok and select one to overwrite or choose a different name");
 								}
@@ -202,12 +198,19 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                     }
                 });
 			// TODO: Need to remember previous behavior via preferences
-			_saveSessionButton.setEnabled(false);
-			_saveNDExButton.doClick();
+			//_saveSessionButton.setEnabled(false);
+
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
 			_guiLoaded = true;
 		}
+		_saveNDExButton.setEnabled(_enabledNDExSave);
+		if (_enabledNDExSave == true){
+			_saveNDExButton.doClick();
+		} else {
+			_saveSessionButton.doClick();
+		}
+
 		_ndexNetworkToOverwrite = null;
 		return true;
 	}
@@ -235,19 +238,25 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	 */
 	public File getSelectedSessionFile(){
 		if (getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_SESSION)){
-			System.out.println("Current directory: " + _sessionChooser.getCurrentDirectory().getAbsolutePath());
-			System.out.println("Current selected file: " + _sessionChooser.getSelectedFile().getAbsolutePath());
-			System.out.println("Current Save As Text Field: " + _saveAsTextField.getText());
 			if (_sessionChooser.getSelectedFile() != null){
 				// handle case where user types into save as dialog a different path
 				// just go with that.
 				if (!_sessionChooser.getSelectedFile().getName().equals(_saveAsTextField.getText())){
 					if (_saveAsTextField.getText().startsWith("/")){
+						LOGGER.debug("Path starts with / so returning "
+								+ _saveAsTextField.getText() + " as desired save path");
 						return new File(_saveAsTextField.getText());
 					}
-					return new File(_sessionChooser.getCurrentDirectory() + File.separator + _saveAsTextField.getText());
+					String desiredFile = _sessionChooser.getCurrentDirectory() + File.separator + _saveAsTextField.getText();
+					LOGGER.debug("Using save as text field since it differs from file selection: " + desiredFile);
+					return new File(desiredFile);
 				}
 				return _sessionChooser.getSelectedFile();
+			}
+			if (_saveAsTextField.getText().trim().length() > 0){
+				String desiredFile = _sessionChooser.getCurrentDirectory() + File.separator + _saveAsTextField.getText();
+					LOGGER.debug("selected file is null but save as text field has a value, using: " + desiredFile);
+					return new File(desiredFile);
 			}
 			return null;
 		}
@@ -282,33 +291,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 			updateMyNetworksTable();
 			
 		}
-	}
-	
-	/**
-	 * Gets the dialog where the save and cancel buttons reside so 
-	 * we can link the buttons to the dialog actions
-	 * @param parent
-	 * @return 
-	 */
-	protected JOptionPane getOptionPane(JComponent parent) {
-        JOptionPane pane = null;
-        if (!(parent instanceof JOptionPane)) {
-            pane = getOptionPane((JComponent)parent.getParent());
-        } else {
-            pane = (JOptionPane) parent;
-        }
-        return pane;
-    }
-	
-	
-	private void setButtonFocus(boolean focus, JButton button){
-		if (focus == true){
-			button.setText(button.getText().replace("808080", "000000"));
-		}
-		else {
-			button.setText(button.getText().replace("000000", "808080"));
-		}
-		button.invalidate();
 	}
 	
 	private JPanel getSavePanel(){
@@ -390,6 +372,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 				return searchForJTextFieldInJPanel((JPanel)c);
 			}
 		}
+		LOGGER.debug("Unable to find Save As Text Field in File Chooser");
 		return null;
 	}
 	
@@ -407,10 +390,12 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 				return searchForJTextFieldInJPanel((JPanel)subc);
 			}
 		}
+		LOGGER.debug("Unable to find Save As Text Field in File Chooser");
 		return null;
 	}
 	
 	private void createJFileChooser(){
+		// TODO need to set the directory to current default...
 		_sessionChooser = new JFileChooser(".");
 		_sessionChooser.setDialogType(JFileChooser.SAVE_DIALOG);
 		_sessionChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -446,7 +431,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 			@Override
 			public void actionPerformed(ActionEvent evt){
 				if (JFileChooser.APPROVE_SELECTION.equals(evt.getActionCommand())){
-					System.out.println(evt.getActionCommand() + " " + evt.getSource());
+					LOGGER.debug(evt.getActionCommand() + " " + evt.getSource());
 					if (getSelectedSessionFile() != null){
 						_mainSaveButton.doClick();
 					} else {
@@ -475,41 +460,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return _cards;
 	}
 	
-	private JPanel getNDExSignInPanel(){
-		JPanel topPanel = new JPanel(new GridBagLayout());
-		//topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
-		topPanel.setPreferredSize(new Dimension(_ndexPanelDimension.width, 50));
-
-		GridBagConstraints c = new GridBagConstraints();
-		c.anchor = GridBagConstraints.EAST;
-		c.gridx = 0;
-		c.gridy = 0;
-		// @TODO add NDEx logo to this
-		JLabel ndexLabel = new JLabel("NDEx");
-		topPanel.add(ndexLabel, c);
-
-		// could just use a filler but this works
-		c = new GridBagConstraints();
-		c.anchor = GridBagConstraints.WEST;
-		c.gridx = 1;
-		c.gridy = 0;
-		c.ipadx = 200;
-		c.weightx = 0.5;
-		topPanel.add(new JLabel(""), c);
-		
-		_ndexSignInButton = SignInButtonHelper.createSignInButton(null);
-		c = new GridBagConstraints();
-		c.anchor = GridBagConstraints.EAST;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 2;
-		c.gridwidth = 2;
-		c.gridy = 0;
-		c.weightx = 1.0;
-		topPanel.add(_ndexSignInButton, c);
-		
-		return topPanel;
-	}
-	
 	private JTable getMyNetworksJTable(){
 		_myNetworksTableModel = new MyNetworksTableModel(new ArrayList<>());
 
@@ -528,12 +478,12 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 				// print first column value from selected row
 				
 				if (myNetworksTable.getSelectedRow() == -1){
-					System.out.println("Nothing selected");
+					LOGGER.debug("Nothing selected");
 					//_mainSaveButton.setEnabled(false);
 					_selectedNDExNetworkIndex = -1;
 					//_ndexSaveAsTextField.setText("");
 				} else {
-					System.out.println(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
+					LOGGER.debug(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
 					_selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
 					//_ndexSaveAsTextField.setText(_myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
 					//_mainSaveButton.setEnabled(true);
@@ -546,10 +496,10 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                JTable target = (JTable)me.getSource();
                int row = target.getSelectedRow(); // select a row
 			   if (row != -1){
-	               System.out.println("Double click: " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
+	               LOGGER.debug("Double click: " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
 				   _selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
 				   _ndexSaveAsTextField.setText(_myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
-				   //_mainSaveButton.doClick();
+				   _mainSaveButton.doClick();
 			   }
 			   
             }
@@ -559,23 +509,6 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		//populate the table
 		updateMyNetworksTable();
 		return myNetworksTable;
-	}
-	
-	private void updateMyNetworksTable(){
-		if (_myNetworksTableModel == null){
-			return;
-		}
-		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
-		if (selectedServer.getUsername() != null){
-			try {
-				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
-			} catch (IOException | NdexException e) {
-				e.printStackTrace();
-				JOptionPane.showMessageDialog(this,
-						ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
-						JOptionPane.ERROR_MESSAGE);
-				}
-		}
 	}
 	
 	private RowFilter<MyNetworksTableModel, Object> getStringMatchRowFilter(final String saveAsText){
@@ -651,28 +584,5 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		JScrollPane scrollPane = new JScrollPane(getMyNetworksJTable());
 		scrollPane.setPreferredSize(new Dimension(570,150));
 		_ndexPanel.add(scrollPane, BorderLayout.PAGE_START);
-	}
-	
-	/**
-	 * This should be registered with ServerManager and will be notified
-	 * when the user updates sign in credentials so we know to do a search
-	 * or change the sign in text box
-	 * @param arg0 
-	 */
-	@Override
-	public void propertyChange(PropertyChangeEvent arg0) {
-		
-		if (isVisible()) {
-			ModalProgressHelper.runWorker(null, "Loading Profile", () -> {
-				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
-				System.out.println("Change to sign in credentials: " + arg0.toString());
-				Server selectedServer = ServerManager.INSTANCE.getServer();
-
-				_myNetworksTableModel.clearNetworkSummaries();
-
-				updateMyNetworksTable();
-				return 1;
-			});
-		}
 	}
 }

@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -13,14 +11,11 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -32,10 +27,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.cytoscape.cyndex2.internal.util.ErrorMessage;
-import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
-import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +56,7 @@ import org.slf4j.LoggerFactory;
  * #L%
  */
 @SuppressWarnings("serial")
-public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChangeListener {
+public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	private final static Logger LOGGER = LoggerFactory.getLogger(OpenSessionOrNetworkDialog.class);
 	public final static String OPEN_SESSION = "OpenSession";
 	public final static String OPEN_NDEX = "OpenNDEx";
@@ -79,29 +71,22 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 	private JFileChooser _sessionChooser;
 	private JPanel _ndexPanel;
 	private JTabbedPane _ndexTabbedPane;
-	private Dimension _dialogDimension = new Dimension(800, 400);
-	private Dimension _leftPanelDimension = new Dimension(150, _dialogDimension.height);
-	private Dimension _leftButtonsDimensions = new Dimension(_leftPanelDimension.width-5,_leftPanelDimension.width-5);
-	private Dimension _rightPanelDimension = new Dimension(600, _dialogDimension.height);
-	private Dimension _ndexTopPanelDimension = new Dimension(_rightPanelDimension.width, 35);
-	private Dimension _ndexPanelDimension = new Dimension(_rightPanelDimension.width, 325);
-	private Color _NDExButtonBlue = new Color(0,255, 255);
-	private Color _SessionButtonOrange = new Color(255,213,128);
+	
 	private Color _defaultButtonColor;
 	private String _selectedCard;
 	private int _selectedNDExNetworkIndex = -1;
 	private int _selectedNDExSearchNetworkIndex = -1;
-	MyNetworksWithOwnerTableModel _myNetworksTableModel;
 	MyNetworksWithOwnerTableModel _searchNetSummaryTable;
 	private JTextField _ndexMyNetworksSearchField;
 	private JTextField _ndexSearchField;
 	private JButton _ndexMyNetworksSearchButton;
 	private JButton _ndexSearchButton;
-	private JButton _ndexSignInButton;
+	
 	private boolean _ndexNeverDisplayed = true;
 	
 	
 	public OpenSessionOrNetworkDialog(){
+		super();
 		_guiLoaded = false;
 	}
 	
@@ -208,36 +193,10 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return null;
 	}
 	
-	protected JOptionPane getOptionPane(JComponent parent) {
-        JOptionPane pane = null;
-        if (!(parent instanceof JOptionPane)) {
-            pane = getOptionPane((JComponent)parent.getParent());
-        } else {
-            pane = (JOptionPane) parent;
-        }
-        return pane;
-    }
-	
-	private void setButtonFocus(boolean focus, JButton button){
-		String o = new String("");
-		if (focus == true){
-			button.setText(button.getText().replaceAll("808080", "000000"));
-		}
-		else {
-			button.setText(button.getText().replaceAll("000000", "808080"));
-		}
-		button.invalidate();
-	}
-	
 	private JPanel getOpenPanel(){
 		JPanel openDialogPanel = new JPanel();
 		openDialogPanel.setPreferredSize(_dialogDimension);
-		//openDialogPanel.setBorder(BorderFactory.createCompoundBorder(
-        //        BorderFactory.createTitledBorder("Open"),
-        //        BorderFactory.createEmptyBorder(5,5,5,5)));
-        //
         JPanel leftPanel = new JPanel();
-        //leftPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Left"),BorderFactory.createEmptyBorder(0,0,0,0)));
         leftPanel.setPreferredSize(_leftPanelDimension);
         _openNDExButton = new JButton("<html><font color=\"#000000\">Open Network<br/><br/><font size=\"-2\">Open a network from NDEx</font></font></html>");
 		_openNDExButton.setOpaque(true);
@@ -508,8 +467,8 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 			   
             }
          }
-      });
-				// panel for my networks
+		});
+		// panel for my networks
 		JPanel searchPanel = new JPanel();
 		
 		// top part of 
@@ -553,52 +512,6 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		_ndexTabbedPane.add("Search NDEx", searchPanel);
 	}
 	
-	/**
-	 * Creates the horizontal panel at the top containing the NDEx sign in button
-	 * with this rough structure:
-	 * 
-	 * ------------------------------------
-	 * | NDEx             (sign in button)|
-	 * ------------------------------------
-	 * 
-	 * @return 
-	 */
-	private JPanel getNDExSignInPanel(){
-		JPanel topPanel = new JPanel(new GridBagLayout());
-		//topPanel.setBorder(BorderFactory.createTitledBorder("NDEx credentials (temporary authentication user interface)"));
-		topPanel.setPreferredSize(new Dimension(_ndexPanelDimension.width, 50));
-
-		GridBagConstraints c = new GridBagConstraints();
-		c.anchor = GridBagConstraints.EAST;
-		c.gridx = 0;
-		c.gridy = 0;
-		// @TODO add NDEx logo to this
-		JLabel ndexLabel = new JLabel("NDEx");
-		topPanel.add(ndexLabel, c);
-
-		// could just use a filler but this works
-		c = new GridBagConstraints();
-		c.anchor = GridBagConstraints.WEST;
-		c.gridx = 1;
-		c.gridy = 0;
-		c.ipadx = 150;
-		c.weightx = 0.5;
-		topPanel.add(new JLabel(""), c);
-		
-		// get the sign in button
-		_ndexSignInButton = SignInButtonHelper.createSignInButton(null);
-		c = new GridBagConstraints();
-		c.anchor = GridBagConstraints.EAST;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 2;
-		c.gridwidth = 2;
-		c.gridy = 0;
-		c.weightx = 1.0;
-		topPanel.add(_ndexSignInButton, c);
-		
-		return topPanel;
-	}
-	
 	private void createNDExPanel(){
 		_ndexPanel = new JPanel();
 		_ndexPanel.setPreferredSize(_ndexPanelDimension);
@@ -624,41 +537,5 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		_ndexPanel.add(_ndexTabbedPane, BorderLayout.PAGE_END);
 		createNDExMyNetworksTabbedPane();
 		createNDExSearchAllTabbedPane();
-	}
-	
-	private void updateMyNetworksTable(){
-		if (_myNetworksTableModel == null){
-			return;
-		}
-		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
-		if (selectedServer.getUsername() != null){
-			try {
-				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
-			} catch (IOException | NdexException e) {
-				e.printStackTrace();
-				JOptionPane.showMessageDialog(this,
-						ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
-						JOptionPane.ERROR_MESSAGE);
-				}
-		}
-	}
-	
-	/**
-	 * This should be registered with ServerManager and will be notified
-	 * when the user updates sign in credentials so we know to do a search
-	 * or change the sign in text box
-	 * @param arg0 
-	 */
-	@Override
-	public void propertyChange(PropertyChangeEvent arg0) {
-		if (isVisible()) {
-			ModalProgressHelper.runWorker(null, "Loading Profile", () -> {
-				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
-				Server selectedServer = ServerManager.INSTANCE.getServer();
-				_myNetworksTableModel.clearNetworkSummaries();
-				updateMyNetworksTable();
-				return 1;
-			});
-		}
 	}
 }
