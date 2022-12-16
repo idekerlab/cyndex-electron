@@ -122,19 +122,21 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 							options, options[1]);
 					if (res == 1){
 						System.out.println("User did not want to overwrite. just return");
-						return null;
+						return new TaskIterator(1, new CanceledTask());
 					}
 					if (res == 0){
 						System.out.println("User does want to overwrite");
 						NDExNetworkManager.updateModificationTimeStamp(currentNetwork, rme.getRemoteModification());
-				
-						currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
+						if (_dialog.getDesiredNetworkName() != null){
+							currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
+						}
 						NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), true);
 						return fac.createTaskIterator(currentNetwork);
 					}
 			} catch(NetworkNotFoundInNDExException nfe){
 				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network is linked to network in NDEx, but that network\n("
-					+ savedUUID.toString()	+ ")\ndoes not exist on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server.\n\nClick ok to display Save Network As dialog");
+					+ savedUUID.toString()	+ ")\ndoes not exist or is not accessible on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n" + 
+							"for user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + "\n\nClick ok to display Save Network As dialog");
 			} catch(Exception ex){
 				ex.printStackTrace();
 
@@ -144,7 +146,7 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 		}
 		
 		if (_dialog.createGUI() == false){
-			return new TaskIterator();
+			return new TaskIterator(1, new CanceledTask());
 		}
 		String desiredRawName = currentNetwork.getRow(currentNetwork).get(CyNetwork.NAME, String.class);
 		String desiredName = desiredRawName == null ? "" : desiredRawName;
@@ -182,7 +184,7 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 			}
 			
         }
-		return null;
+		return new TaskIterator(1, new CanceledTask());
 	}
 	
 	private NDExBasicSaveParameters getNDExBasicSaveParameters(){
