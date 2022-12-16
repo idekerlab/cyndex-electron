@@ -70,10 +70,11 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 	public boolean isReady() {
 		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
 		// check if network is already on NDEx and we have valid credentials...
-		if (appManager.getCurrentNetwork() != null){
-			return true;
-		}
-		return false;
+		//if (appManager.getCurrentNetwork() != null){
+		//		return true;
+		//}
+		//always return true cause the user may want to save a session
+		return true;
 	}
 	
 	/**
@@ -95,10 +96,19 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
 		// check if network is already on NDEx and we have valid credentials...
 		CyNetwork currentNetwork = appManager.getCurrentNetwork();
-		UUID savedUUID = NDExNetworkManager.getUUID(currentNetwork);
-		if (_alwaysPromptUser == false && savedUUID != null){
+		UUID savedUUID = null;
+		if (currentNetwork != null){
+			savedUUID = NDExNetworkManager.getUUID(currentNetwork);
+			_dialog.setNDExSaveEnabled(true);
+			String desiredRawName = currentNetwork.getRow(currentNetwork).get(CyNetwork.NAME, String.class);
+			String desiredName = desiredRawName == null ? "" : desiredRawName;
+			_dialog.setDesiredNetworkName(desiredName);
+		} else {
+			_dialog.setNDExSaveEnabled(false);
+		}
+		
+		if (currentNetwork != null && _alwaysPromptUser == false && savedUUID != null){
 			try {
-			
 				Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
 				if (selectedServer != null){
 					UpdateUtil.updateIsPossible(currentNetwork, savedUUID,
@@ -148,9 +158,8 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 		if (_dialog.createGUI() == false){
 			return new TaskIterator(1, new CanceledTask());
 		}
-		String desiredRawName = currentNetwork.getRow(currentNetwork).get(CyNetwork.NAME, String.class);
-		String desiredName = desiredRawName == null ? "" : desiredRawName;
-		_dialog.setDesiredNetworkName(desiredName);
+		
+		
 		Object[] options = {_dialog.getMainSaveButton(), _dialog.getMainCancelButton()};
 		int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(),
                                            this._dialog,
