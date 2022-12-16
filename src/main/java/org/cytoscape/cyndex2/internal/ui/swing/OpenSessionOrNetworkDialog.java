@@ -153,7 +153,7 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
                 });
 			
 			// TODO: need to remember desired behavior via preferences
-			//_openSessionButton.doClick();
+			//_openSessionButton.setEnabled(true);
 			_openNDExButton.doClick();
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
@@ -188,6 +188,11 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 		return null;
 	}
 	
+	/**
+	 * Gets the NDEx selected network if the open NDEx button/tab is selected and
+	 * the user has selected a network
+	 * @return selected network or {@code null}
+	 */
 	public NetworkSummary getNDExSelectedNetwork(){
 		if (getSelectedCard() == null){
 			return null;
@@ -255,7 +260,6 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 				setButtonFocus(true, _openNDExButton);
 				setButtonFocus(false, _openSessionButton);
 				// need to figure out if this should be enabled or not
-				
 				_mainOpenButton.setEnabled(false);
 				if (_ndexNeverDisplayed == true){
 					_ndexNeverDisplayed = false;
@@ -265,6 +269,8 @@ public class OpenSessionOrNetworkDialog extends JPanel implements PropertyChange
 					if (ServerManager.INSTANCE.getSelectedServer() != null){
 						ServerManager.INSTANCE.firePropertyChangeEvent();
 					}
+				} else if (getNDExSelectedNetwork() != null){
+					_mainOpenButton.setEnabled(true);					
 				}
 			}
 		});
