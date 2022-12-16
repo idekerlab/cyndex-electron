@@ -69,7 +69,21 @@ mvn clean install
 ```
 
 ## Install
-(TBD)
+
+Installation can be done via Cytoscape App Manager or via this trick that **requires** a 
+restart of Cytoscape:
+
+
+```bash
+mvn clean install 
+cp target/cy-ndex*.jar ~/CytoscapeConfiguration/3/apps/installed/.
+
+# WARNING: be sure to restart cytoscape after doing this
+```
+
+WARNING: Only one ``cy-ndex-2-<VERSION>.jar`` file should exist in ``installed`` directory. Be sure to delete any other
+         ``cy-ndex2-<VERSION>.jar`` files
+
 
 ## New: CyREST API
 This app adds new endpoints to Cytoscape and you can use them to programmatically access some of the features of this application.
