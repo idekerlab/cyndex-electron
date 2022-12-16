@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -203,7 +202,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
                     }
                 });
 			// TODO: Need to remember previous behavior via preferences
-			//_openSessionButton.doClick();
+			_saveSessionButton.setEnabled(false);
 			_saveNDExButton.doClick();
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
@@ -236,8 +235,18 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	 */
 	public File getSelectedSessionFile(){
 		if (getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_SESSION)){
-			
+			System.out.println("Current directory: " + _sessionChooser.getCurrentDirectory().getAbsolutePath());
+			System.out.println("Current selected file: " + _sessionChooser.getSelectedFile().getAbsolutePath());
+			System.out.println("Current Save As Text Field: " + _saveAsTextField.getText());
 			if (_sessionChooser.getSelectedFile() != null){
+				// handle case where user types into save as dialog a different path
+				// just go with that.
+				if (!_sessionChooser.getSelectedFile().getName().equals(_saveAsTextField.getText())){
+					if (_saveAsTextField.getText().startsWith("/")){
+						return new File(_saveAsTextField.getText());
+					}
+					return new File(_sessionChooser.getCurrentDirectory() + File.separator + _saveAsTextField.getText());
+				}
 				return _sessionChooser.getSelectedFile();
 			}
 			return null;
@@ -259,6 +268,9 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 	}
 	
 	public String getDesiredNetworkName(){
+		if (_ndexSaveAsTextField == null){
+			return null;
+		}
 		return _ndexSaveAsTextField.getText();
 	}
 	
@@ -612,6 +624,7 @@ public class SaveSessionOrNetworkDialog extends JPanel implements PropertyChange
 		saveAsPanel.add(saveAsLabel, BorderLayout.LINE_START);
 		_ndexSaveAsTextField = new JTextField(_initialNetworkName);
 		_ndexSaveAsTextField.setPreferredSize(new Dimension(300, 25));
+		_ndexSaveAsTextField.setToolTipText("Name to save network as to NDEx.\nNOTE: Changing the name here and savingwill change the name of the network in Cytoscape");
 		_ndexSaveAsTextField.getDocument().addDocumentListener(new DocumentListener(){
 				@Override
 				public void insertUpdate(DocumentEvent e){
