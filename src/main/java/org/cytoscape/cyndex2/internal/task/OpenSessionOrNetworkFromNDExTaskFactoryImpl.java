@@ -4,7 +4,6 @@ import java.io.File;
 import javax.swing.JOptionPane;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.cyndex2.internal.ui.swing.OpenSessionOrNetworkDialog;
-import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
@@ -58,11 +57,9 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
 	
 	@Override
 	public synchronized TaskIterator createTaskIterator() {
-		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);
-		TaskIterator taskIterator = null;
-		
+		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);		
 		if (_dialog.createGUI() == false){
-			return new TaskIterator();
+			return new TaskIterator(1, new CanceledTask());
 		}
 		
 		Object[] options = {_dialog.getMainOpenButton(), _dialog.getMainCancelButton()};
@@ -88,16 +85,15 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
 				if (netSummary != null){
 					try{
 						NdexRestClientModelAccessLayer client = ServerManager.INSTANCE.getSelectedServer().getModelAccessLayer();
-						
 						return new TaskIterator(1, new NetworkImportTask(client,
 								netSummary.getExternalId(), null, true));
 					} catch(Exception e){
 						e.printStackTrace();
+						_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Error importing network from NDEx: " + e.getMessage());
 					}
 				}
 			}
         }
-		return new TaskIterator();
-		//return new TaskIterator(1, new OpenNetworkFromNDExTask(serviceRegistrar));
+		return new TaskIterator(1, new CanceledTask());
 	}
 }
