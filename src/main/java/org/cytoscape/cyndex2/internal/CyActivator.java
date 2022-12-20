@@ -381,11 +381,10 @@ public class CyActivator extends AbstractCyActivator {
 			ShowDialogUtil dialogUtil = new ShowDialogUtil();
 			dialogUtil.showMessageDialog(swingApplication.getJFrame(),
 					"<html><center><font color=\"#ff0000\" size=\"+4\"><b>NOT FOR PRODUCTION</b></font></center><br/><br/>"
-					+ "<font color=\"#ff0000\">THIS IMPLEMENTATION IS EXPERIMENTAL</font><br/><br/>"
+					+ "<font color=\"#ff0000\">THIS IMPLEMENTATION IS EXPERIMENTAL AND MAY CAUSE DATA LOSS</font><br/><br/>"
 					+ "CyNDEx2 Core App has <font color=\"#ff0000\"><b>replaced</b></font> "
 					+ "<b>Open..., Save</b>, and <b>Save As...</b> File menu items and associated hot keys<br/><br/>"
-					+ "For legacy behavior, uninstall CyNDEx-2 App & restart Cytsocape or use <b>Open Session, Save Session,</b> or <b>Save Session As</b> menu items<br/><br/>"
-					+ "Loading and saving networks will probably result in data corruption and/or loss.<br/><br/>"
+					+ "For legacy behavior, uninstall CyNDEx-2 App & restart Cytsocape <b>or</b> use <b>Open Session, Save Session,</b> or <b>Save Session As</b> menu items<br/><br/>"
 					+ "<font color=\"#ff0000\">YOU HAVE BEEN WARNED!!!!</font><br/><br/>"
 					+ "Have a nice day.</html>", "Warning", JOptionPane.ERROR_MESSAGE);
 			logger.warn("Experimental CyNDEx-2 app has replaced open/save menus with internal versions!!!!");
