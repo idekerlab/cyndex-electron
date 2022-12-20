@@ -12,6 +12,8 @@ import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * #%L
@@ -38,7 +40,8 @@ import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
  */
 
 public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFactory {
-
+	private final static Logger LOGGER = LoggerFactory.getLogger(OpenSessionOrNetworkFromNDExTaskFactoryImpl.class);
+	
 	private final CyServiceRegistrar serviceRegistrar;
 
 	private OpenSessionOrNetworkDialog _dialog;
@@ -88,7 +91,7 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
 						return new TaskIterator(1, new NetworkImportTask(client,
 								netSummary.getExternalId(), null, true));
 					} catch(Exception e){
-						e.printStackTrace();
+						LOGGER.error("Error importing network from NDEx", e);
 						_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Error importing network from NDEx: " + e.getMessage());
 					}
 				}
