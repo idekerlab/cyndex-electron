@@ -1,6 +1,6 @@
 package org.cytoscape.cyndex2.util;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,10 +27,41 @@ import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 
 import java.util.Map;
 
+import org.cytoscape.cyndex2.internal.errors.NetworkNotFoundInNDExException;
+import org.cytoscape.cyndex2.internal.errors.ReadPermissionException;
+import org.cytoscape.cyndex2.internal.errors.RemoteModificationException;
+import org.cytoscape.cyndex2.internal.errors.WritePermissionException;
+import static org.mockito.Matchers.eq;
+
 public class UpdateUtilTests {
 	
-	@Test (expected = Exception.class)
-	public void updateWhenNoSessionModifiedTime() throws Exception { 
+	
+	@Test
+	public void updateWhenUUIDIsNull() throws Exception {
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
+		
+		try{
+			UpdateUtil.updateIsPossible(network, null, nc, mal);
+			fail("UpdateUtil did not throw expected exception");
+		}
+		catch(NetworkNotFoundInNDExException e){
+			assertEquals("Exception message did not match", "UUID unknown. Can't find current Network in NDEx.",
+					e.getMessage());
+		}	
+	}
+	
+	@Test
+	public void updateWhenPermissionTableIsNull() throws Exception { 
 		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
 		CyServiceModule.setServiceRegistrar(reg);
 		
@@ -40,50 +71,115 @@ public class UpdateUtilTests {
 		CyNetwork network = mock(CyNetwork.class);
 		when(network.getSUID()).thenReturn(669l);
 		
-		CyRow networkRow = mock(CyRow.class);
-		when(networkRow.get("NDEx UUID", String.class)).thenReturn((new UUID(1l,2l)).toString());
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
 		
-		CyTable networkTable = mock(CyTable.class);
-		when(network.getTable(CyNetwork.class, CyNetwork.HIDDEN_ATTRS)).thenReturn(networkTable);
-		when(networkTable.getRow(669l)).thenReturn(networkRow);
-
-		CyNetworkManager nm = mock(CyNetworkManager.class);
-		when(nm.getNetwork(669l)).thenReturn(network);
-		when(reg.getService(CyNetworkManager.class)).thenReturn(nm);
+		NetworkSummary ns = mock(NetworkSummary.class);
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
+		when(mal.getUserNetworkPermission(any(UUID.class), any(UUID.class),
+					Mockito.anyBoolean())).thenReturn(null);
+		
+		try {
+			UpdateUtil.updateIsPossible(network, uuid, nc, mal); 
+			fail("UpdateUtil did not throw expected exception");
+		} catch(NetworkNotFoundInNDExException e){
+			assertEquals("exception message mismatch", "Cannot find network.", e.getMessage());
+		}
+	}
+	
+	@Test
+	public void updateWhenPermissionTableIsEmpty() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
 		
 		NdexRestClient nc = mock(NdexRestClient.class);
 		when(nc.getUserUid()).thenReturn(user);
 		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
 		
+		NetworkSummary ns = mock(NetworkSummary.class);
+		
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
 		Map<String, Permissions> permissionTable = new HashMap<String, Permissions>();
-		permissionTable.put(user.toString(), Permissions.WRITE);
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
+					Mockito.anyBoolean())).thenReturn(permissionTable);
+		
+		try {
+			UpdateUtil.updateIsPossible(network, uuid, nc, mal); 
+			fail("UpdateUtil did not throw expected exception");
+		} catch(NetworkNotFoundInNDExException e){
+			assertEquals("exception message mismatch", "Cannot find network.", e.getMessage());
+		}
+	}
+	
+	@Test
+	public void updateWhenPermissionTableReadOnly() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
 		
 		NetworkSummary ns = mock(NetworkSummary.class);
 		
-		when(ns.getModificationTime()).thenReturn(new Timestamp(0));
-		when(ns.getIsReadOnly()).thenReturn(false);
-		
-		try {
-			when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
-		} catch (IOException | NdexException e2) {
-			e2.printStackTrace();
-			fail();
-		}
-	
-		
-		try {
-			when(mal.getUserNetworkPermission(any(UUID.class), any(UUID.class),
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
+		Map<String, Permissions> permissionTable = new HashMap<String, Permissions>();
+		permissionTable.put(uuid.toString(), Permissions.READ);
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
 					Mockito.anyBoolean())).thenReturn(permissionTable);
-		} catch (IOException | NdexException e1) {
-			e1.printStackTrace();
-		}
 		
-		UpdateUtil.updateIsPossibleHelper(669l, false, nc, mal);
-		 
-		fail("UpdateUtil did not throw expected exception");
+		try {
+			UpdateUtil.updateIsPossible(network, uuid, nc, mal); 
+			fail("UpdateUtil did not throw expected exception");
+		} catch(WritePermissionException e){
+			assertEquals("exception message mismatch", "You don't have permission to write to this network.", e.getMessage());
+		}
 	}
 	
-	@Test (expected = Exception.class)
+	@Test
+	public void updateWhenNDExExceptionOnPermissionCheck() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
+		
+		NetworkSummary ns = mock(NetworkSummary.class);
+		
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
+		
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
+					Mockito.anyBoolean())).thenThrow(new IOException("error"));
+		
+		try {
+			UpdateUtil.updateIsPossible(network, uuid, nc, mal); 
+			fail("UpdateUtil did not throw expected exception");
+		} catch(ReadPermissionException e){
+			assertEquals("exception message mismatch", "Unable to read network permissions. error", e.getMessage());
+		}
+	}
+	
+	@Test (expected = RemoteModificationException.class)
 	public void updateWhenSessionIsOutdated() throws Exception { 
 		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
 		CyServiceModule.setServiceRegistrar(reg);
