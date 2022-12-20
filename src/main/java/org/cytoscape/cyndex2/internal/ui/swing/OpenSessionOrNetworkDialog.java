@@ -314,7 +314,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 			@Override
 			public void actionPerformed(ActionEvent evt){
 				if (JFileChooser.APPROVE_SELECTION.equals(evt.getActionCommand())){
-					System.out.println(evt.getActionCommand() + " " + evt.getSource());
+					LOGGER.debug(evt.getActionCommand() + " " + evt.getSource());
 					if (getSelectedSessionFile() != null && getSelectedSessionFile().isFile()){
 						_mainOpenButton.doClick();
 					}
@@ -360,11 +360,11 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 				// print first column value from selected row
 				
 				if (myNetworksTable.getSelectedRow() == -1){
-					System.out.println("Nothing selected");
+					LOGGER.debug("Nothing selected");
 					_mainOpenButton.setEnabled(false);
 					_selectedNDExNetworkIndex = -1;
 				} else {
-					System.out.println(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
+					LOGGER.debug(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
 					_mainOpenButton.setEnabled(true);
 					_selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
 				}
@@ -376,7 +376,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
                JTable target = (JTable)me.getSource();
                int row = target.getSelectedRow(); // select a row
 			   if (row != -1){
-	               System.out.println("Double click: " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
+	               LOGGER.debug("Double click: " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
 				   _selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
 				   _mainOpenButton.doClick();
 			   }
@@ -407,7 +407,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 					return;
 				} 
 				try {
-					System.out.println("need to run query here");
+					LOGGER.info("need to run query here");
 					//NetworkSearchResult nrs = _ndexAccessLayer.findNetworks(_ndexMyNetworksSearchField.getText(), _ndexServer.getUsername(), null, true, 0, 400);
 					//_myNetSummaryTable.replaceNetworkSummaries(nrs.getNetworks());
 				} catch(Exception jpe){
@@ -443,12 +443,12 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 				// print first column value from selected row
 				
 				if (searchTable.getSelectedRow() == -1){
-					System.out.println("Nothing selected");
+					LOGGER.debug("Nothing selected");
 					_mainOpenButton.setEnabled(false);
 					_selectedNDExSearchNetworkIndex = -1;
 				} else {
-					System.out.println(event.toString() + " " + searchTable.getValueAt(searchTable.getSelectedRow(), 0).toString());
-					System.out.println("\t" + _searchNetSummaryTable.getNetworkSummaries().get(searchTable.getSelectedRow()).getName());
+					LOGGER.debug(event.toString() + " " + searchTable.getValueAt(searchTable.getSelectedRow(), 0).toString());
+					LOGGER.debug("\t" + _searchNetSummaryTable.getNetworkSummaries().get(searchTable.getSelectedRow()).getName());
 					_mainOpenButton.setEnabled(true);
 					_selectedNDExSearchNetworkIndex = searchTable.convertRowIndexToModel(searchTable.getSelectedRow());
 				}
@@ -460,7 +460,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
                JTable target = (JTable)me.getSource();
                int row = target.getSelectedRow(); // select a row
 			   if (row != -1){
-	               System.out.println("Double click: " + searchTable.getValueAt(searchTable.getSelectedRow(), 0).toString());
+	               LOGGER.debug("Double click: " + searchTable.getValueAt(searchTable.getSelectedRow(), 0).toString());
 				   _selectedNDExSearchNetworkIndex = searchTable.convertRowIndexToModel(searchTable.getSelectedRow());
 				   _mainOpenButton.doClick();
 			   }
@@ -490,7 +490,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 					return;
 				} 
 				try {
-					System.out.println("not implemented");
+					LOGGER.info("not implemented");
 					//NetworkSearchResult nrs = _ndexAccessLayer.findNetworks(_ndexSearchField.getText(), null, null, true, 0, 400);
 					//_searchNetSummaryTable.replaceNetworkSummaries(nrs.getNetworks());
 				} catch(Exception jpe){
@@ -524,7 +524,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		_ndexTabbedPane.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				System.out.println("Tab: " + _ndexTabbedPane.getSelectedIndex());
+				LOGGER.debug("Tab: " + _ndexTabbedPane.getSelectedIndex());
 				if (getNDExSelectedNetwork() != null){
 					_mainOpenButton.setEnabled(true);
 				} else {
