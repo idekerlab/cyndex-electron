@@ -54,7 +54,7 @@ public class UpdateUtil {
 		try {
 
 			Map<String, Permissions> permissionTable = mal.getUserNetworkPermission(nc.getUserUid(), uuid, false);
-			if (permissionTable == null || permissionTable.size() == 0) {
+			if (permissionTable == null || permissionTable.isEmpty()) {
 				throw new NetworkNotFoundInNDExException("Cannot find network.");
 			} else if (permissionTable.get(uuid.toString()) == Permissions.READ) {
 				throw new WritePermissionException("You don't have permission to write to this network.");
