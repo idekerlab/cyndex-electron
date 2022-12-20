@@ -21,6 +21,8 @@ import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.ndexbio.model.object.network.NetworkSummary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * #%L
@@ -47,7 +49,7 @@ import org.ndexbio.model.object.network.NetworkSummary;
  */
 
 public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
-
+	private final static Logger LOGGER = LoggerFactory.getLogger(SaveSessionOrNetworkToNDExTaskFactoryImpl.class);
 	private final CyServiceRegistrar serviceRegistrar;
 	private boolean _alwaysPromptUser;
 	private SaveSessionOrNetworkDialog _dialog;
@@ -131,11 +133,11 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 							JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
 							options, options[1]);
 					if (res == 1){
-						System.out.println("User did not want to overwrite. just return");
+						LOGGER.debug("User did not want to overwrite. just return");
 						return new TaskIterator(1, new CanceledTask());
 					}
 					if (res == 0){
-						System.out.println("User does want to overwrite");
+						LOGGER.debug("User does want to overwrite");
 						NDExNetworkManager.updateModificationTimeStamp(currentNetwork, rme.getRemoteModification());
 						if (_dialog.getDesiredNetworkName() != null){
 							currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
@@ -175,10 +177,10 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 			if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_SESSION)){
 				File sessionFile = _dialog.getSelectedSessionFile();
 				if (sessionFile != null){
-					System.out.println("selected session file is: " + sessionFile.getAbsolutePath());
+					LOGGER.debug("selected session file is: " + sessionFile.getAbsolutePath());
 					return new TaskIterator(1, new SaveSessionAsTask(sessionFile, serviceRegistrar));
 				} else {
-					System.out.println("selected session file is null");
+					LOGGER.debug("selected session file is null");
 				}
 			} else if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
 
