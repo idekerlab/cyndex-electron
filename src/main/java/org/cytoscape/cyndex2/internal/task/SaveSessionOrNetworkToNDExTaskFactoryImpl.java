@@ -125,9 +125,9 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 				}
 			} catch(RemoteModificationException rme){
 					Object[] options = {"Yes", "No"};
-					int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(), "Network was modified on remote server.\n\n"
+					int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(), "Network was modified on remote NDEx server.\n\n"
 							+ "Do you wish to overwrite anyways?",
-							"Overwrite",
+							"NDEx Overwrite",
 							JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
 							options, options[1]);
 					if (res == 1){
@@ -151,7 +151,7 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 				ex.printStackTrace();
 
 				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Save error, due to this error:\n\n"
-						+ ex.getMessage() + "\n\nGoing to bring up save as dialog, but let Chris know how you want to proceed?");         
+						+ ex.getMessage() + "\n\nGoing to bring up save as dialog, but let Cytoscape developers know how you want to proceed?");         
 			}
 		}
 		
