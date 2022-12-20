@@ -98,7 +98,6 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
     }
 	
 	protected void setButtonFocus(boolean focus, JButton button){
-		String o = new String("");
 		if (focus == true){
 			button.setText(button.getText().replaceAll("808080", "000000"));
 		}
