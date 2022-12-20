@@ -5,16 +5,11 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -142,7 +137,7 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         JOptionPane pane = getOptionPane((JComponent)e.getSource());
-						if (_selectedCard == SaveSessionOrNetworkDialog.SAVE_NDEX){
+						if (_selectedCard.equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
 							List<NetworkSummary> matchingNetworks = SaveSessionOrNetworkDialog.this._myNetworksTableModel.getNetworksMatchingName(_ndexSaveAsTextField.getText());
 
 							if (matchingNetworks != null && matchingNetworks.size() > 0){
@@ -158,7 +153,7 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 									//user selected a network so lets verify they want to overwrite
 									Object[] options = {"Yes", "No"};
 									int res = _dialogUtil.showOptionDialog(pane, "Do you wish to overwrite " + 
-													netName + "?","Overwrite:",
+													netName + "?","NDEx Overwrite",
 											JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
 											options, options[1]);
 									if (res == 1){
@@ -318,7 +313,7 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 				setButtonFocus(true, _saveNDExButton);
 				setButtonFocus(false, _saveSessionButton);
 				_selectedCard = SaveSessionOrNetworkDialog.SAVE_NDEX;
-				_mainSaveButton.setEnabled(false);
+				_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 			}
 		});
 		
@@ -337,19 +332,19 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
                  */
                 @Override
                 public void actionPerformed(ActionEvent e){
-                        CardLayout cl = (CardLayout)_cards.getLayout();
-                        cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_SESSION);
-                        _saveNDExButton.setBackground(_defaultButtonColor);
-                        _saveSessionButton.setBackground(_SessionButtonOrange);
-                        setButtonFocus(false, _saveNDExButton);
-                        setButtonFocus(true, _saveSessionButton);
+					CardLayout cl = (CardLayout)_cards.getLayout();
+					cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_SESSION);
+					_saveNDExButton.setBackground(_defaultButtonColor);
+					_saveSessionButton.setBackground(_SessionButtonOrange);
+					setButtonFocus(false, _saveNDExButton);
+					setButtonFocus(true, _saveSessionButton);
 
-                        _selectedCard = SaveSessionOrNetworkDialog.SAVE_SESSION;
-                        if (_saveAsTextField == null){
-                                _mainSaveButton.setEnabled(true);
-                        } else {
-                                _mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
-                        }
+					_selectedCard = SaveSessionOrNetworkDialog.SAVE_SESSION;
+					if (_saveAsTextField == null){
+						_mainSaveButton.setEnabled(true);
+					} else {
+						_mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
+					}
                 }
         });
 
@@ -557,7 +552,7 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		saveAsPanel.add(saveAsLabel, BorderLayout.LINE_START);
 		_ndexSaveAsTextField = new JTextField(_initialNetworkName);
 		_ndexSaveAsTextField.setPreferredSize(new Dimension(300, 25));
-		_ndexSaveAsTextField.setToolTipText("Name to save network as to NDEx.\nNOTE: Changing the name here and savingwill change the name of the network in Cytoscape");
+		_ndexSaveAsTextField.setToolTipText("Name to save network as.\nNOTE: Changing the name here and saving will change the name of the network in Cytoscape");
 		_ndexSaveAsTextField.getDocument().addDocumentListener(new DocumentListener(){
 				@Override
 				public void insertUpdate(DocumentEvent e){
