@@ -26,8 +26,10 @@ import org.ndexbio.rest.client.NdexRestClient;
 import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 
 import java.util.Map;
+import org.cytoscape.cyndex2.internal.errors.CheckPermissionException;
 
 import org.cytoscape.cyndex2.internal.errors.NetworkNotFoundInNDExException;
+import org.cytoscape.cyndex2.internal.errors.ReadOnlyException;
 import org.cytoscape.cyndex2.internal.errors.ReadPermissionException;
 import org.cytoscape.cyndex2.internal.errors.RemoteModificationException;
 import org.cytoscape.cyndex2.internal.errors.WritePermissionException;
@@ -177,6 +179,192 @@ public class UpdateUtilTests {
 		} catch(ReadPermissionException e){
 			assertEquals("exception message mismatch", "Unable to read network permissions. error", e.getMessage());
 		}
+	}
+	
+	@Test
+	public void updateWhenNetworkSummarySaysReadOnly() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
+		
+		NetworkSummary ns = mock(NetworkSummary.class);
+		when(ns.getIsReadOnly()).thenReturn(true);
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
+		Map<String, Permissions> permissionTable = new HashMap<String, Permissions>();
+		permissionTable.put(uuid.toString(), Permissions.WRITE);
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
+					Mockito.anyBoolean())).thenReturn(permissionTable);
+		
+		try {
+			UpdateUtil.updateIsPossible(network, uuid, nc, mal); 
+			fail("UpdateUtil did not throw expected exception");
+		} catch(ReadOnlyException e){
+			assertEquals("exception message mismatch", "The network is read only.", e.getMessage());
+		}
+	}
+	
+	@Test
+	public void updateWhenCheckTimestampFalse() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
+		
+		NetworkSummary ns = mock(NetworkSummary.class);
+		when(ns.getIsReadOnly()).thenReturn(false);
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
+		Map<String, Permissions> permissionTable = new HashMap<String, Permissions>();
+		permissionTable.put(uuid.toString(), Permissions.WRITE);
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
+					Mockito.anyBoolean())).thenReturn(permissionTable);
+		
+		assertEquals(uuid, UpdateUtil.updateIsPossible(network, uuid, nc, mal, false)); 
+
+	}
+	
+	@Test
+	public void updateWhenLocalTimestampIsNull() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
+		CyRow networkRow = mock(CyRow.class);
+		when(networkRow.get("NDEx UUID", String.class)).thenReturn((new UUID(1l,2l)).toString());
+		//when(networkRow.get("NDEx Modification Timestamp", String.class)).thenReturn((new Timestamp(0)).toString());
+		
+		
+		CyTable networkTable = mock(CyTable.class);
+		when(network.getTable(CyNetwork.class, CyNetwork.HIDDEN_ATTRS)).thenReturn(networkTable);
+		when(networkTable.getRow(669l)).thenReturn(networkRow);
+
+		CyNetworkManager nm = mock(CyNetworkManager.class);
+		when(nm.getNetwork(669l)).thenReturn(network);
+		when(reg.getService(CyNetworkManager.class)).thenReturn(nm);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
+		
+		NetworkSummary ns = mock(NetworkSummary.class);
+		when(ns.getIsReadOnly()).thenReturn(false);
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
+		Map<String, Permissions> permissionTable = new HashMap<String, Permissions>();
+		permissionTable.put(uuid.toString(), Permissions.WRITE);
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
+					Mockito.anyBoolean())).thenReturn(permissionTable);
+		
+		try {
+			UpdateUtil.updateIsPossible(network, uuid, nc, mal, true); 
+			fail("Expected Exception");
+		} catch(Exception e){
+			assertEquals("mismatch exception", "Session file is missing timestamp.", e.getMessage());
+		}
+
+	}
+	
+	@Test
+	public void updateWhenGetNetworkSummaryByIdRaisesIOException() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
+		CyRow networkRow = mock(CyRow.class);
+		when(networkRow.get("NDEx UUID", String.class)).thenReturn((new UUID(1l,2l)).toString());
+		//when(networkRow.get("NDEx Modification Timestamp", String.class)).thenReturn((new Timestamp(0)).toString());
+		
+		
+		CyTable networkTable = mock(CyTable.class);
+		when(network.getTable(CyNetwork.class, CyNetwork.HIDDEN_ATTRS)).thenReturn(networkTable);
+		when(networkTable.getRow(669l)).thenReturn(networkRow);
+
+		CyNetworkManager nm = mock(CyNetworkManager.class);
+		when(nm.getNetwork(669l)).thenReturn(network);
+		when(reg.getService(CyNetworkManager.class)).thenReturn(nm);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
+		
+		NetworkSummary ns = mock(NetworkSummary.class);
+		when(ns.getIsReadOnly()).thenReturn(false);
+		when(mal.getNetworkSummaryById(uuid)).thenThrow(new IOException("error"));
+		Map<String, Permissions> permissionTable = new HashMap<String, Permissions>();
+		permissionTable.put(uuid.toString(), Permissions.WRITE);
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
+					Mockito.anyBoolean())).thenReturn(permissionTable);
+		
+		try {
+			UpdateUtil.updateIsPossible(network, uuid, nc, mal); 
+			fail("Expected Exception");
+		} catch(CheckPermissionException e){
+			assertEquals("mismatch exception", "An error occurred while checking permissions. error", e.getMessage());
+		}
+
+	}
+	
+	@Test
+	public void updateIsPosibleFourArgSuccess() throws Exception { 
+		CyServiceRegistrar reg = mock(CyServiceRegistrar.class);
+		CyServiceModule.setServiceRegistrar(reg);
+		
+		UUID uuid = new UUID(1l,2l);
+		UUID user = new UUID(1l,3l);
+		
+		CyNetwork network = mock(CyNetwork.class);
+		when(network.getSUID()).thenReturn(669l);
+		CyRow networkRow = mock(CyRow.class);
+		when(networkRow.get("NDEx UUID", String.class)).thenReturn((new UUID(1l,2l)).toString());
+		when(networkRow.get("NDEx Modification Timestamp", String.class)).thenReturn((new Timestamp(0)).toString());
+		
+		
+		CyTable networkTable = mock(CyTable.class);
+		when(network.getTable(CyNetwork.class, CyNetwork.HIDDEN_ATTRS)).thenReturn(networkTable);
+		when(networkTable.getRow(669l)).thenReturn(networkRow);
+
+		CyNetworkManager nm = mock(CyNetworkManager.class);
+		when(nm.getNetwork(669l)).thenReturn(network);
+		when(reg.getService(CyNetworkManager.class)).thenReturn(nm);
+		
+		NdexRestClient nc = mock(NdexRestClient.class);
+		when(nc.getUserUid()).thenReturn(user);
+		NdexRestClientModelAccessLayer mal = mock(NdexRestClientModelAccessLayer.class);
+		
+		NetworkSummary ns = mock(NetworkSummary.class);
+		when(ns.getIsReadOnly()).thenReturn(true);
+		when(ns.getModificationTime()).thenReturn(new Timestamp(0));
+		when(ns.getIsReadOnly()).thenReturn(false);
+		when(mal.getNetworkSummaryById(uuid)).thenReturn(ns);
+		Map<String, Permissions> permissionTable = new HashMap<String, Permissions>();
+		permissionTable.put(uuid.toString(), Permissions.WRITE);
+		when(mal.getUserNetworkPermission(eq(user), eq(uuid),
+					Mockito.anyBoolean())).thenReturn(permissionTable);
+		
+		assertEquals(uuid, UpdateUtil.updateIsPossible(network, uuid, nc, mal));
 	}
 	
 	@Test (expected = RemoteModificationException.class)
