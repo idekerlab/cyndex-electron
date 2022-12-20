@@ -113,7 +113,8 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 			return;
 		}
 		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
-		if (selectedServer.getUsername() != null){
+		_myNetworksTableModel.clearNetworkSummaries();
+		if (selectedServer != null && selectedServer.getUsername() != null){
 			try {
 				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
 			} catch (IOException | NdexException e) {
