@@ -23,10 +23,15 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableRowSorter;
+import org.cytoscape.cyndex2.internal.ui.StringMatchRowFilter;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.slf4j.Logger;
@@ -62,6 +67,8 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	public final static String OPEN_NDEX = "OpenNDEx";
 	public final static String SIGN_IN = "Sign in";
 	public final static String SIGN_OUT = "Sign out";
+	public final static String MY_NETWORKS_TABBED_PANE = "My Networks Tabbed Pane";
+	public final static String SEARCH_NETWORKS_TABBED_PANE = "";
 	private boolean _guiLoaded;
 	private JPanel _cards;
 	private JButton _openSessionButton;
@@ -76,11 +83,11 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	private String _selectedCard;
 	private int _selectedNDExNetworkIndex = -1;
 	private int _selectedNDExSearchNetworkIndex = -1;
-	MyNetworksWithOwnerTableModel _searchNetSummaryTable;
 	private JTextField _ndexMyNetworksSearchField;
 	private JTextField _ndexSearchField;
-	private JButton _ndexMyNetworksSearchButton;
+	private TableRowSorter _myNetworksTableSorter;
 	private JButton _ndexSearchButton;
+	private JTable _myNetworksTable;
 	
 	private boolean _ndexNeverDisplayed = true;
 	
@@ -116,7 +123,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		if (_guiLoaded == false){
 			_mainOpenButton = new JButton("Open");
 			_mainCancelButton = new JButton("Cancel");
-			_searchNetSummaryTable = new MyNetworksWithOwnerTableModel(new ArrayList<>());
+			_searchTableModel = new MyNetworksWithOwnerTableModel(new ArrayList<>());
 			this.add(getOpenPanel());
 			this.invalidate();
 			
@@ -187,7 +194,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 				return _myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
 			}
 			if (_ndexTabbedPane.getSelectedIndex() == 1 && _selectedNDExSearchNetworkIndex != -1){
-				return _searchNetSummaryTable.getNetworkSummaries().get(_selectedNDExSearchNetworkIndex);
+				return _searchTableModel.getNetworkSummaries().get(_selectedNDExSearchNetworkIndex);
 			}
 		}
 		return null;
@@ -347,37 +354,38 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	private void createNDExMyNetworksTabbedPane(){
 		_myNetworksTableModel = new MyNetworksWithOwnerTableModel(new ArrayList<>());
 
-		JTable myNetworksTable = new JTable(_myNetworksTableModel);
-		myNetworksTable.setAutoCreateRowSorter(true);
-		myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
-        myNetworksTable.setFillsViewportHeight(true);
+		_myNetworksTable = new JTable(_myNetworksTableModel);
+		_myNetworksTableSorter = new TableRowSorter<>(_myNetworksTableModel);
+		_myNetworksTable.setRowSorter(_myNetworksTableSorter);
+		_myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
+        _myNetworksTable.setFillsViewportHeight(true);
 		
-		myNetworksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		myNetworksTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
-		myNetworksTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+		_myNetworksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		_myNetworksTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
+		_myNetworksTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent event) {
 				// do some actions here, for example
 				// print first column value from selected row
 				
-				if (myNetworksTable.getSelectedRow() == -1){
+				if (_myNetworksTable.getSelectedRow() == -1){
 					LOGGER.debug("Nothing selected");
 					_mainOpenButton.setEnabled(false);
 					_selectedNDExNetworkIndex = -1;
 				} else {
-					LOGGER.debug(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
+					LOGGER.debug(event.toString() + " " + _myNetworksTable.getValueAt(_myNetworksTable.getSelectedRow(), 0).toString());
 					_mainOpenButton.setEnabled(true);
-					_selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
+					_selectedNDExNetworkIndex = _myNetworksTable.convertRowIndexToModel(_myNetworksTable.getSelectedRow());
 				}
 			}
         });
-		myNetworksTable.addMouseListener(new MouseAdapter() {
+		_myNetworksTable.addMouseListener(new MouseAdapter() {
          public void mouseClicked(MouseEvent me) {
             if (me.getClickCount() == 2) {     // to detect double click events
                JTable target = (JTable)me.getSource();
                int row = target.getSelectedRow(); // select a row
 			   if (row != -1){
-	               LOGGER.debug("Double click: " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
-				   _selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
+	               LOGGER.debug("Double click: " + _myNetworksTable.getValueAt(_myNetworksTable.getSelectedRow(), 0).toString());
+				   _selectedNDExNetworkIndex = _myNetworksTable.convertRowIndexToModel(_myNetworksTable.getSelectedRow());
 				   _mainOpenButton.doClick();
 			   }
 			   
@@ -392,37 +400,31 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		JPanel myNetSearchPanel = new JPanel();
 		
 		_ndexMyNetworksSearchField = new JTextField("");
-		_ndexMyNetworksSearchField.setEnabled(false);
-		_ndexMyNetworksSearchField.setToolTipText("Search within My Networks");
+		_ndexMyNetworksSearchField.setToolTipText("Search by name within My Networks");
 		_ndexMyNetworksSearchField.setPreferredSize(new Dimension(475,22));
-		myNetSearchPanel.add(_ndexMyNetworksSearchField, BorderLayout.LINE_START);
-		_ndexMyNetworksSearchButton = new JButton("search");
-		_ndexMyNetworksSearchButton.setEnabled(false);
-		_ndexMyNetworksSearchButton.addActionListener(new ActionListener(){
-			@Override
-			public void actionPerformed(ActionEvent e){
-				_myNetworksTableModel.clearNetworkSummaries();
-				_selectedNDExNetworkIndex = -1;
-				if (_ndexMyNetworksSearchField.getText().length() == 0){
-					return;
-				} 
-				try {
-					LOGGER.info("need to run query here");
-					//NetworkSearchResult nrs = _ndexAccessLayer.findNetworks(_ndexMyNetworksSearchField.getText(), _ndexServer.getUsername(), null, true, 0, 400);
-					//_myNetSummaryTable.replaceNetworkSummaries(nrs.getNetworks());
-				} catch(Exception jpe){
-					jpe.printStackTrace();
+		_ndexMyNetworksSearchField.getDocument().addDocumentListener(new DocumentListener(){
+				@Override
+				public void insertUpdate(DocumentEvent e){
+					newMyNetworksTableSorterFilter();
+					_mainOpenButton.setEnabled(_myNetworksTable.getSelectedRow() != -1);
 				}
+				@Override
+				public void removeUpdate(DocumentEvent e){
+					newMyNetworksTableSorterFilter();
+					_mainOpenButton.setEnabled(_myNetworksTable.getSelectedRow() != -1);
+					
+				}
+				@Override
+				public void changedUpdate(DocumentEvent e){
+					newMyNetworksTableSorterFilter();
+					_mainOpenButton.setEnabled(_myNetworksTable.getSelectedRow() != -1);
+				}
+			});
+		myNetSearchPanel.add(_ndexMyNetworksSearchField, BorderLayout.LINE_START);
 				
-			}
-		});
-		_ndexMyNetworksSearchButton.setToolTipText("Search all of NDEx for matching networks");
-		_ndexMyNetworksSearchButton.setPreferredSize(new Dimension(_ndexMyNetworksSearchButton.getPreferredSize().width,22));
-		myNetSearchPanel.add(_ndexMyNetworksSearchButton, BorderLayout.LINE_END);
-		
 		myNetPanel.add(myNetSearchPanel, BorderLayout.PAGE_START);
-		myNetPanel.setName("My Networks Tabbed Pane");
-		JScrollPane scrollPane = new JScrollPane(myNetworksTable);
+		myNetPanel.setName(OpenSessionOrNetworkDialog.MY_NETWORKS_TABBED_PANE);
+		JScrollPane scrollPane = new JScrollPane(_myNetworksTable);
 		scrollPane.setPreferredSize(new Dimension(570,250));
 		myNetPanel.add(scrollPane, BorderLayout.PAGE_END);
 		
@@ -431,7 +433,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	
 	private void createNDExSearchAllTabbedPane(){
 		
-		JTable searchTable = new JTable(_searchNetSummaryTable);
+		JTable searchTable = new JTable(_searchTableModel);
 		searchTable.setAutoCreateRowSorter(true);
 		searchTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
         searchTable.setFillsViewportHeight(true);
@@ -448,7 +450,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 					_selectedNDExSearchNetworkIndex = -1;
 				} else {
 					LOGGER.debug(event.toString() + " " + searchTable.getValueAt(searchTable.getSelectedRow(), 0).toString());
-					LOGGER.debug("\t" + _searchNetSummaryTable.getNetworkSummaries().get(searchTable.getSelectedRow()).getName());
+					LOGGER.debug("\t" + _searchTableModel.getNetworkSummaries().get(searchTable.getSelectedRow()).getName());
 					_mainOpenButton.setEnabled(true);
 					_selectedNDExSearchNetworkIndex = searchTable.convertRowIndexToModel(searchTable.getSelectedRow());
 				}
@@ -475,24 +477,35 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		JPanel searchSearchPanel = new JPanel();
 		
 		_ndexSearchField = new JTextField("");
-		_ndexSearchField.setEnabled(false);
 		_ndexSearchField.setToolTipText("Search all of NDEx for networks");
 		_ndexSearchField.setPreferredSize(new Dimension(475,22));
+		_ndexSearchField.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e){
+				_searchTableModel.clearNetworkSummaries();
+				if (_ndexSearchField.getText().isBlank()){
+					return;
+				} 
+				try {
+					updateSearchTable(_ndexSearchField.getText());
+				} catch(Exception jpe){
+					jpe.printStackTrace();
+				}
+				
+			}
+		});
 		searchSearchPanel.add(_ndexSearchField, BorderLayout.LINE_START);
 		_ndexSearchButton = new JButton("search");
-		_ndexSearchButton.setEnabled(false);
 		_ndexSearchButton.setToolTipText("Search all of NDEx for networks");
 		_ndexSearchButton.addActionListener(new ActionListener(){
 			@Override
 			public void actionPerformed(ActionEvent e){
-				_searchNetSummaryTable.clearNetworkSummaries();
-				if (_ndexSearchField.getText().length() == 0){
+				_searchTableModel.clearNetworkSummaries();
+				if (_ndexSearchField.getText().isBlank()){
 					return;
 				} 
 				try {
-					LOGGER.info("not implemented");
-					//NetworkSearchResult nrs = _ndexAccessLayer.findNetworks(_ndexSearchField.getText(), null, null, true, 0, 400);
-					//_searchNetSummaryTable.replaceNetworkSummaries(nrs.getNetworks());
+					updateSearchTable(_ndexSearchField.getText());
 				} catch(Exception jpe){
 					jpe.printStackTrace();
 				}
@@ -504,11 +517,10 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		searchSearchPanel.add(_ndexSearchButton, BorderLayout.LINE_END);
 		
 		searchPanel.add(searchSearchPanel, BorderLayout.PAGE_START);
-		searchPanel.setName("Search Networks Tabbed Pane");
+		searchPanel.setName(SEARCH_NETWORKS_TABBED_PANE);
 		JScrollPane scrollPane = new JScrollPane(searchTable);
 		scrollPane.setPreferredSize(new Dimension(570,250));
-		searchPanel.add(scrollPane, BorderLayout.PAGE_END);
-				
+		searchPanel.add(scrollPane, BorderLayout.PAGE_END);		
 		_ndexTabbedPane.add("Search NDEx", searchPanel);
 	}
 	
@@ -525,17 +537,37 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				LOGGER.debug("Tab: " + _ndexTabbedPane.getSelectedIndex());
-				if (getNDExSelectedNetwork() != null){
-					_mainOpenButton.setEnabled(true);
-				} else {
-					_mainOpenButton.setEnabled(false);
+				_mainOpenButton.setEnabled(false);
+				if (getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
+					if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
+						_mainOpenButton.setEnabled(true);
+					}
+					if (_ndexTabbedPane.getSelectedIndex() == 1 && _selectedNDExSearchNetworkIndex != -1){
+						_mainOpenButton.setEnabled(true);
+					}
 				}
-				
 			}
 		});
 		
 		_ndexPanel.add(_ndexTabbedPane, BorderLayout.PAGE_END);
 		createNDExMyNetworksTabbedPane();
 		createNDExSearchAllTabbedPane();
+	}
+	
+	/**
+	 * Filters networks table with regex set to value of ndex save as text field
+	 * This has problems if one has regex characters in filename cause things
+	 * will not match. There is also a concurrent modification issue
+	 */
+	private void newMyNetworksTableSorterFilter(){
+		RowFilter<MyNetworksTableModel, Object> rf = null;
+		// if current expression fails do not update
+		try {
+			rf = StringMatchRowFilter.getStringMatchRowFilter(_ndexMyNetworksSearchField.getText());
+		} catch(java.util.regex.PatternSyntaxException e){
+			return;
+		}
+		_myNetworksTableSorter.setRowFilter(rf);
+		
 	}
 }

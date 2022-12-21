@@ -16,6 +16,7 @@ import org.cytoscape.cyndex2.internal.util.ErrorMessage;
 import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.NetworkSearchResult;
 
 /**
  *
@@ -35,6 +36,8 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 	
 	protected JButton _ndexSignInButton;
 	protected MyNetworksTableModel _myNetworksTableModel;
+	protected MyNetworksWithOwnerTableModel _searchTableModel;
+
 	
 	/**
 	 * Creates the horizontal panel at the top containing the NDEx sign in button
@@ -116,6 +119,27 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		if (selectedServer != null && selectedServer.getUsername() != null){
 			try {
 				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
+			} catch (IOException | NdexException e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(this,
+						ErrorMessage.failedServerCommunication + "\n\nError Message: " + e.getMessage(), "Error",
+						JOptionPane.ERROR_MESSAGE);
+				}
+		}
+	}
+	
+	protected void updateSearchTable(final String searchString){
+		if (_searchTableModel == null){
+			return;
+		}
+		Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
+		_searchTableModel.clearNetworkSummaries();
+		if (selectedServer != null && selectedServer.getUsername() != null){
+			try {
+				NetworkSearchResult nrs = selectedServer.getModelAccessLayer().findNetworks(searchString, null, 0, 400);
+				if (nrs.getNetworks() != null){
+					_searchTableModel.replaceNetworkSummaries(nrs.getNetworks());
+				}
 			} catch (IOException | NdexException e) {
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(this,
