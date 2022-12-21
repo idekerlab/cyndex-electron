@@ -51,31 +51,33 @@ import org.slf4j.LoggerFactory;
 public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
 	private final static Logger LOGGER = LoggerFactory.getLogger(SaveSessionOrNetworkToNDExTaskFactoryImpl.class);
 	private final CyServiceRegistrar serviceRegistrar;
+	private static final long DIALOG_DISPLAY_DURATION = 5000l;
 	private boolean _alwaysPromptUser;
 	private SaveSessionOrNetworkDialog _dialog;
 	private ShowDialogUtil _dialogUtil;
 	private Server _ndexServer;
+	private long _progressDisplayDurationMillis;
 	
-	public SaveSessionOrNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, boolean alwaysPromptUser) {
+	
+	public SaveSessionOrNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, boolean alwaysPromptUser, long progressDisplayDurationMillis) {
 		this.serviceRegistrar = serviceRegistrar;
 		_alwaysPromptUser = alwaysPromptUser;
 		_dialogUtil = new ShowDialogUtil();
 		_dialog = new SaveSessionOrNetworkDialog(_dialogUtil);
+		_progressDisplayDurationMillis = progressDisplayDurationMillis;
 		
 	}
 
-	public SaveSessionOrNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar) {
-		this(serviceRegistrar, false);
+	public SaveSessionOrNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, long progressDisplayDurationMillis) {
+		this(serviceRegistrar, false,progressDisplayDurationMillis);
 	}
 
+	/**
+	 * always return true cause user may want to save a session
+	 * @return 
+	 */
 	@Override
 	public boolean isReady() {
-		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
-		// check if network is already on NDEx and we have valid credentials...
-		//if (appManager.getCurrentNetwork() != null){
-		//		return true;
-		//}
-		//always return true cause the user may want to save a session
 		return true;
 	}
 	
@@ -123,7 +125,9 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 					params.metadata = new HashMap<>();
 
 					NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
-					return fac.createTaskIterator(currentNetwork);
+					TaskIterator ti = fac.createTaskIterator(currentNetwork);
+					ti.append(new NDExFinalizeSaveTask(_progressDisplayDurationMillis));
+					return ti; 
 				}
 			} catch(RemoteModificationException rme){
 					Object[] options = {"Yes", "No"};
@@ -143,7 +147,9 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 							currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
 						}
 						NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), true);
-						return fac.createTaskIterator(currentNetwork);
+						TaskIterator ti = fac.createTaskIterator(currentNetwork);
+						ti.append(new NDExFinalizeSaveTask(_progressDisplayDurationMillis));
+						return ti; 
 					}
 			} catch(NetworkNotFoundInNDExException nfe){
 				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network is linked to network in NDEx, but that network\n("
@@ -191,7 +197,9 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 				}
 				currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
                 NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), overwriteNetwork != null);
-				return fac.createTaskIterator(currentNetwork);   
+				TaskIterator ti = fac.createTaskIterator(currentNetwork);
+				ti.append(new NDExFinalizeSaveTask(_progressDisplayDurationMillis));
+				return ti;   
 			}
 			
         }
