@@ -120,6 +120,18 @@ public class CyActivator extends AbstractCyActivator {
 		return Boolean.parseBoolean(val);
 	}
 	
+	public static long progressDisplayDuration(){
+		String val = cyProps.getProperties().getProperty("cyndex2.progressDisplayDuration");
+		if (val == null){
+			return 3000l;
+		}
+		try {
+			return Long.parseLong(val);
+		} catch(NumberFormatException nfe){
+			return 3000l;
+		}
+	}
+	
 	public static boolean canThisAppControlSaveHotKey(){
 		String val = cyProps.getProperties().getProperty("cytoscape.save.hotkey.owner");
 		if (val == null || val.trim().isEmpty()){
@@ -276,7 +288,9 @@ public class CyActivator extends AbstractCyActivator {
 		
 		registerService(bc, openSessionOrNetworkFac, TaskFactory.class, ndexOpenNetworkTaskFactoryProps);
 		
-		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFac = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar);
+		long progressDisplayDuration = CyActivator.progressDisplayDuration();
+		
+		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFac = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar, progressDisplayDuration);
 		final Properties ndexSaveSessionOrNetworkTaskFactoryProps = new Properties();
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ID, "saveSessionOrNetworkToCloudTaskFactory");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
@@ -293,7 +307,7 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
 		registerService(bc, saveSessionOrNetworkFac, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryProps);
 		
-		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFacAlwaysPrompt = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar, true);
+		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFacAlwaysPrompt = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar, true, progressDisplayDuration);
 		final Properties ndexSaveSessionOrNetworkTaskFactoryPropsPrompt = new Properties();
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(ID, "saveSessionOrNetworkToCloudAlwaysPromptTaskFactory");
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(PREFERRED_MENU, "File");
@@ -378,6 +392,7 @@ public class CyActivator extends AbstractCyActivator {
 				saveCollectionToNDExContextMenuProps);
 		
 		if (menusRenamed){
+			/**
 			ShowDialogUtil dialogUtil = new ShowDialogUtil();
 			dialogUtil.showMessageDialog(swingApplication.getJFrame(),
 					"<html><center><font color=\"#ff0000\" size=\"+4\"><b>NOT FOR PRODUCTION</b></font></center><br/><br/>"
@@ -387,6 +402,7 @@ public class CyActivator extends AbstractCyActivator {
 					+ "For legacy behavior, uninstall CyNDEx-2 App & restart Cytsocape <b>or</b> use <b>Open Session, Save Session,</b> or <b>Save Session As</b> menu items<br/><br/>"
 					+ "<font color=\"#ff0000\">YOU HAVE BEEN WARNED!!!!</font><br/><br/>"
 					+ "Have a nice day.</html>", "Warning", JOptionPane.ERROR_MESSAGE);
+			*/
 			logger.warn("Experimental CyNDEx-2 app has replaced open/save menus with internal versions!!!!");
 		}
 	}
