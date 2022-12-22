@@ -16,7 +16,6 @@ import java.util.Properties;
 import javax.swing.Icon;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 
 import org.cytoscape.application.CyApplicationConfiguration;
 import org.cytoscape.application.CyApplicationManager;
@@ -39,6 +38,7 @@ import org.cytoscape.cyndex2.internal.ui.ImportUserNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.ImportNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.MainToolBarAction;
 import org.cytoscape.cyndex2.internal.ui.SaveNetworkToNDExTaskFactory;
+import org.cytoscape.cyndex2.internal.ui.swing.OpenSessionOrNetworkDialog;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.cyndex2.internal.util.CIServiceManager;
 import org.cytoscape.cyndex2.internal.util.ExternalAppManager;
@@ -268,8 +268,10 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.0");
 		ndexSaveNetworkTaskFactoryProps.setProperty(TITLE, "Network to NDEx...");
 		registerService(bc, ndexSaveNetworkTaskFactory, TaskFactory.class, ndexSaveNetworkTaskFactoryProps);
-
-		final OpenSessionOrNetworkFromNDExTaskFactoryImpl openSessionOrNetworkFac = new OpenSessionOrNetworkFromNDExTaskFactoryImpl(serviceRegistrar);
+		ShowDialogUtil dialogUtil = new ShowDialogUtil();
+		OpenSessionOrNetworkDialog openDialog = new OpenSessionOrNetworkDialog();
+		
+		final OpenSessionOrNetworkFromNDExTaskFactoryImpl openSessionOrNetworkFac = new OpenSessionOrNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
 		final Properties ndexOpenNetworkTaskFactoryProps = new Properties();
 		ndexOpenNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
 		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP, "Open Network from NDEx or Session");

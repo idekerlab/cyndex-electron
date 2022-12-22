@@ -47,10 +47,12 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
 	private OpenSessionOrNetworkDialog _dialog;
 	private ShowDialogUtil _dialogUtil;
 	
-	public OpenSessionOrNetworkFromNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar) {
+	public OpenSessionOrNetworkFromNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar,
+			OpenSessionOrNetworkDialog dialog,
+			ShowDialogUtil dialogUtil) {
 		this.serviceRegistrar = serviceRegistrar;
-		_dialog = new OpenSessionOrNetworkDialog();
-		_dialogUtil = new ShowDialogUtil();
+		_dialog = dialog;
+		_dialogUtil = dialogUtil;
 	}
 
 	@Override
