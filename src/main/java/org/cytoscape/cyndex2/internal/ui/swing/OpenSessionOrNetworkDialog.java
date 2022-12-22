@@ -121,6 +121,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	 */
 	public boolean createGUI(){
 		if (_guiLoaded == false){
+			
 			_mainOpenButton = new JButton("Open");
 			_mainCancelButton = new JButton("Cancel");
 			_searchTableModel = new MyNetworksWithOwnerTableModel(new ArrayList<>());
