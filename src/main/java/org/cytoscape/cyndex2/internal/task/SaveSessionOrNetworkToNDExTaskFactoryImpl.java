@@ -7,6 +7,7 @@ import javax.swing.JOptionPane;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.cyndex2.internal.errors.NetworkNotFoundInNDExException;
+import org.cytoscape.cyndex2.internal.errors.ReadOnlyException;
 import org.cytoscape.cyndex2.internal.errors.RemoteModificationException;
 import org.cytoscape.cyndex2.internal.rest.parameter.NDExBasicSaveParameters;
 import org.cytoscape.cyndex2.internal.ui.swing.SaveSessionOrNetworkDialog;
@@ -155,7 +156,12 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network is linked to network in NDEx, but that network\n("
 					+ savedUUID.toString()	+ ")\ndoes not exist or is not accessible on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n" + 
 							"for user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + "\n\nClick ok to display Save Network As dialog");
-			} catch(Exception ex){
+			} catch(ReadOnlyException re){
+				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network \n("
+					+ savedUUID.toString()	+ ")\nis set to read only on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n" + 
+							"for user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + " and cannot be saved.\n\nClick ok to display Save Network As dialog");
+				
+			}catch(Exception ex){
 				ex.printStackTrace();
 
 				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Save error, due to this error:\n\n"
