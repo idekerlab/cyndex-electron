@@ -29,6 +29,10 @@ public class NDExTimestampRenderer  extends DefaultTableCellRenderer {
 		if (formatter == null) {
 			formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.getDefault());
 		}
-		setText((value == null && value instanceof Timestamp) ? "" : formatter.format(((Timestamp) value)));
+		if (value == null){
+			setText("");
+			return;
+		}
+		setText((value instanceof Timestamp) ? formatter.format((Timestamp) value) : "");
 	}
 }
