@@ -81,7 +81,15 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	
 	private Color _defaultButtonColor;
 	private String _selectedCard;
+	
+	/**
+	 * selected row in NDEx my networks, if none is selected value is -1
+	 */
 	private int _selectedNDExNetworkIndex = -1;
+	
+	/**
+	 * selected row in NDEx search networks, if none is selected value is -1
+	 */
 	private int _selectedNDExSearchNetworkIndex = -1;
 	private JTextField _ndexMyNetworksSearchField;
 	private JTextField _ndexSearchField;
@@ -89,6 +97,11 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	private JButton _ndexSearchButton;
 	private JTable _myNetworksTable;
 	
+	/**
+	 * Flag to denote whether the open NDEx panel has ever been displayed
+	 * this is needed to fire a property change listener to populate
+	 * the table the first time the display is loaded 
+	 */
 	private boolean _ndexNeverDisplayed = true;
 	
 	
@@ -116,7 +129,8 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	}
 	
 	/**
-	 * Initializes gui once, subsequent calls do nothing
+	 * Initializes gui once, subsequent calls update NDEx my networks table
+	 * and search table
 	 * @return 
 	 */
 	public boolean createGUI(){
@@ -132,7 +146,9 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         JOptionPane pane = getOptionPane((JComponent)e.getSource());
-                        pane.setValue(_mainOpenButton);
+						if (pane != null){
+	                        pane.setValue(_mainOpenButton);
+						}
                     }
                 });
 			_mainOpenButton.setEnabled(false);
@@ -141,18 +157,22 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         JOptionPane pane = getOptionPane((JComponent)e.getSource());
-                        pane.setValue(_mainCancelButton);
+						if (pane != null){
+	                        pane.setValue(_mainCancelButton);
+						}
                     }
                 });
-			
+
 			// TODO: need to remember desired behavior via preferences
 			//_openSessionButton.setEnabled(true);
 			_openNDExButton.doClick();
+
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
 			_guiLoaded = true;
 		} 
 		updateMyNetworksTable();
+		updateSearchTable();
 
 		return true;
 	}
@@ -171,7 +191,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	 * @return 
 	 */
 	public File getSelectedSessionFile(){
-		if (getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_SESSION)){
+		if (getSelectedCard() != null && getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_SESSION)){
 			
 			if (_sessionChooser.getSelectedFile() != null && _sessionChooser.getSelectedFile().isFile()){
 				return _sessionChooser.getSelectedFile();
@@ -206,14 +226,16 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		openDialogPanel.setPreferredSize(_dialogDimension);
         JPanel leftPanel = new JPanel();
         leftPanel.setPreferredSize(_leftPanelDimension);
+		
+		//using html fragment to set color and size of text
         _openNDExButton = new JButton("<html><font color=\"#000000\">Open Network<br/><br/><font size=\"-2\">Open a network from NDEx</font></font></html>");
 		_openNDExButton.setOpaque(true);
         _openNDExButton.setPreferredSize(_leftButtonsDimensions);
 		_defaultButtonColor = _openNDExButton.getBackground();
 		_openNDExButton.addActionListener(new ActionListener() {
 			/**
-			 * When a user clicks on the open ndex button need to change
-			 * the background for the open ndex button and for open session 
+			 * When a user clicks on the open NDEx button need to change
+			 * the background for the open NDEx button and for open session 
 			 * button. Also need to determine if the open button should be
 			 * enabled or not
 			 */
@@ -244,6 +266,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		
         leftPanel.add(_openNDExButton, BorderLayout.PAGE_START);
 
+		//using html fragment to set color and size of text
         _openSessionButton = new JButton("<html><font color=\"#000000\">Open Session<br/><br/><font size=\"-2\">Open a session (.cys) file from the local machine</font></font></html>");
 		_openSessionButton.setOpaque(true);
         _openSessionButton.setPreferredSize(_leftButtonsDimensions);
@@ -271,7 +294,6 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 				}
 			}
 		});
-
 		leftPanel.add(_openSessionButton, BorderLayout.PAGE_END);
         openDialogPanel.add(leftPanel, BorderLayout.LINE_START);
 
@@ -334,7 +356,6 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	
 	private JPanel getRightCardPanel(){
 		_cards = new JPanel(new CardLayout());
-        //rightPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Right"),BorderFactory.createEmptyBorder(0,0,0,0)));
         _cards.setPreferredSize(this._rightPanelDimension);
 		
 		createJFileChooser();
@@ -348,7 +369,6 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		createNDExPanel();
 		_cards.add(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
 		cl.addLayoutComponent(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
-		
 		return _cards;
 	}
 	
@@ -404,6 +424,8 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		_ndexMyNetworksSearchField.setToolTipText("Search by name within My Networks");
 		_ndexMyNetworksSearchField.setPreferredSize(new Dimension(475,22));
 		_ndexMyNetworksSearchField.getDocument().addDocumentListener(new DocumentListener(){
+			//There are three events that need to be monitored to catch changes to a text
+			//field
 				@Override
 				public void insertUpdate(DocumentEvent e){
 					newMyNetworksTableSorterFilter();
@@ -442,11 +464,8 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		searchTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
 		searchTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent event) {
-				// do some actions here, for example
-				// print first column value from selected row
-				
 				if (searchTable.getSelectedRow() == -1){
-					LOGGER.debug("Nothing selected");
+					LOGGER.debug("Nothing selected, disabling open button");
 					_mainOpenButton.setEnabled(false);
 					_selectedNDExSearchNetworkIndex = -1;
 				} else {
@@ -481,18 +500,13 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		_ndexSearchField.setToolTipText("Search all of NDEx for networks");
 		_ndexSearchField.setPreferredSize(new Dimension(475,22));
 		_ndexSearchField.addActionListener(new ActionListener(){
+			/**
+			 * Catch user hitting enter key on search field
+			 * @param e 
+			 */
 			@Override
 			public void actionPerformed(ActionEvent e){
-				_searchTableModel.clearNetworkSummaries();
-				if (_ndexSearchField.getText().isBlank()){
-					return;
-				} 
-				try {
-					updateSearchTable(_ndexSearchField.getText());
-				} catch(Exception jpe){
-					jpe.printStackTrace();
-				}
-				
+				updateSearchTable();
 			}
 		});
 		searchSearchPanel.add(_ndexSearchField, BorderLayout.LINE_START);
@@ -501,15 +515,7 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		_ndexSearchButton.addActionListener(new ActionListener(){
 			@Override
 			public void actionPerformed(ActionEvent e){
-				_searchTableModel.clearNetworkSummaries();
-				if (_ndexSearchField.getText().isBlank()){
-					return;
-				} 
-				try {
-					updateSearchTable(_ndexSearchField.getText());
-				} catch(Exception jpe){
-					jpe.printStackTrace();
-				}
+				updateSearchTable();
 				
 			}
 		});
@@ -525,12 +531,23 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		_ndexTabbedPane.add("Search NDEx", searchPanel);
 	}
 	
+	private void updateSearchTable(){
+		_searchTableModel.clearNetworkSummaries();
+		if (_ndexSearchField.getText().isBlank()){
+			return;
+		} 
+		try {
+			updateSearchTable(_ndexSearchField.getText());
+		} catch(Exception jpe){
+			LOGGER.warn("Exception while running new search", jpe);
+		}
+	}
 	private void createNDExPanel(){
 		_ndexPanel = new JPanel();
 		_ndexPanel.setPreferredSize(_ndexPanelDimension);
 		
 		_ndexPanel.add(getNDExSignInPanel(), BorderLayout.PAGE_START);
-		
+
 		// lets add tabbed pane
 		_ndexTabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		_ndexTabbedPane.setPreferredSize(new Dimension(600, 350));
