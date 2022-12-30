@@ -120,6 +120,12 @@ public class CyActivator extends AbstractCyActivator {
 		return Boolean.parseBoolean(val);
 	}
 	
+	/**
+	 * Gets the value of the property cyndex2.progressDisplayDuration which 
+	 * denotes the minimum time in ms the save dialog should be displayed when 
+	 * saving networks to NDEx. 
+	 * @return Value of property or 3000 (3 seconds) if unable to parse property
+	 */
 	public static long progressDisplayDuration(){
 		String val = cyProps.getProperties().getProperty("cyndex2.progressDisplayDuration");
 		if (val == null){
@@ -128,7 +134,26 @@ public class CyActivator extends AbstractCyActivator {
 		try {
 			return Long.parseLong(val);
 		} catch(NumberFormatException nfe){
+			logger.warn("Unable to convert value of cyndex2.progressDisplayDuration property to long, using default value of 3000: " + nfe.getMessage());
 			return 3000l;
+		}
+	}
+	
+	/**
+	 * Number of networks to display in "My Networks" and "Search NDEx" tables
+	 * as dictated by cyndex2.numberOfNDExNetworksToList property
+	 * @return Value of property or 400 if unset or there was a parsing error
+	 */
+	public static int numberOfNDExNetworksToList(){
+		String val = cyProps.getProperties().getProperty("cyndex2.numberOfNDExNetworksToList");
+		if (val == null){
+			return 400;
+		}
+		try {
+			return Integer.parseInt(val);
+		} catch(NumberFormatException nfe){
+			logger.warn("Unable to convert value of cyndex2.progressDisplayDuration property to integer, using default value of 400: " + nfe.getMessage());
+			return 400;
 		}
 	}
 	
@@ -269,7 +294,7 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveNetworkTaskFactoryProps.setProperty(TITLE, "Network to NDEx...");
 		registerService(bc, ndexSaveNetworkTaskFactory, TaskFactory.class, ndexSaveNetworkTaskFactoryProps);
 		ShowDialogUtil dialogUtil = new ShowDialogUtil();
-		OpenSessionOrNetworkDialog openDialog = new OpenSessionOrNetworkDialog();
+		OpenSessionOrNetworkDialog openDialog = new OpenSessionOrNetworkDialog(CyActivator.numberOfNDExNetworksToList());
 		
 		final OpenSessionOrNetworkFromNDExTaskFactoryImpl openSessionOrNetworkFac = new OpenSessionOrNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
 		final Properties ndexOpenNetworkTaskFactoryProps = new Properties();
