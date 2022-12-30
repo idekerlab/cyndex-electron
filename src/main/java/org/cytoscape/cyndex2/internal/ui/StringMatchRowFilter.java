@@ -30,7 +30,7 @@ public class StringMatchRowFilter {
 				}
 				// the saveAsText null check is really needed
 				if (networkName != null && saveAsText != null &&
-						networkName.contains(saveAsText)){
+						networkName.toLowerCase().contains(saveAsText.toLowerCase())){
 					return true;
 				}
 				return false;

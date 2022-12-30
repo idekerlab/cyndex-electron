@@ -74,7 +74,7 @@ public class StringMatchRowFilterTests {
 		summaries.add(ns);
 		MyNetworksTableModel model = new MyNetworksTableModel(summaries);
 		
-		RowFilter<MyNetworksTableModel, Object> rf = StringMatchRowFilter.getStringMatchRowFilter("hello");
+		RowFilter<MyNetworksTableModel, Object> rf = StringMatchRowFilter.getStringMatchRowFilter("Hello");
 		RowFilter.Entry<MyNetworksTableModel, Object> mockEntry = mock(RowFilter.Entry.class);
 		when(mockEntry.getIdentifier()).thenReturn(new Integer(0));
 		when(mockEntry.getModel()).thenReturn(model);
