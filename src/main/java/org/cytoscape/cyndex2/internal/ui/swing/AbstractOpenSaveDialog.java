@@ -37,6 +37,17 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 	protected JButton _ndexSignInButton;
 	protected MyNetworksTableModel _myNetworksTableModel;
 	protected MyNetworksWithOwnerTableModel _searchTableModel;
+	protected int _networkTableLimit;
+	
+	
+	
+	public AbstractOpenSaveDialog(int networkTableLimit){
+		_networkTableLimit = networkTableLimit;
+	}
+	
+	public AbstractOpenSaveDialog(){
+		this(400);
+	} 
 
 	
 	/**
@@ -118,7 +129,7 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		_myNetworksTableModel.clearNetworkSummaries();
 		if (selectedServer != null && selectedServer.getUsername() != null){
 			try {
-				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks());
+				_myNetworksTableModel.replaceNetworkSummaries(selectedServer.getModelAccessLayer().getMyNetworks(0, _networkTableLimit));
 			} catch (IOException | NdexException e) {
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(this,
@@ -136,7 +147,7 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		_searchTableModel.clearNetworkSummaries();
 		if (selectedServer != null && selectedServer.getUsername() != null){
 			try {
-				NetworkSearchResult nrs = selectedServer.getModelAccessLayer().findNetworks(searchString, null, 0, 400);
+				NetworkSearchResult nrs = selectedServer.getModelAccessLayer().findNetworks(searchString, null, 0, _networkTableLimit);
 				if (nrs.getNetworks() != null){
 					_searchTableModel.replaceNetworkSummaries(nrs.getNetworks());
 				}
@@ -160,7 +171,6 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		if (isVisible()) {
 			ModalProgressHelper.runWorker(null, "Loading Profile", () -> {
 				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
-				Server selectedServer = ServerManager.INSTANCE.getServer();
 				_myNetworksTableModel.clearNetworkSummaries();
 				updateMyNetworksTable();
 				return 1;

@@ -13,6 +13,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -24,6 +25,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -104,9 +107,12 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	 */
 	private boolean _ndexNeverDisplayed = true;
 	
-	
 	public OpenSessionOrNetworkDialog(){
-		super();
+		this(400);
+	}
+	
+	public OpenSessionOrNetworkDialog(int networkTableLimit){
+		super(networkTableLimit);
 		_guiLoaded = false;
 	}
 	
@@ -458,6 +464,10 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		
 		JTable searchTable = new JTable(_searchTableModel);
 		searchTable.setAutoCreateRowSorter(true);
+		List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+		sortKeys.add(new RowSorter.SortKey(MyNetworksWithOwnerTableModel.MODIFIED_COL, SortOrder.DESCENDING));
+		searchTable.getRowSorter().setSortKeys(sortKeys);
+		
 		searchTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
         searchTable.setFillsViewportHeight(true);
 		searchTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -533,9 +543,6 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	
 	private void updateSearchTable(){
 		_searchTableModel.clearNetworkSummaries();
-		if (_ndexSearchField.getText().isBlank()){
-			return;
-		} 
 		try {
 			updateSearchTable(_ndexSearchField.getText());
 		} catch(Exception jpe){
