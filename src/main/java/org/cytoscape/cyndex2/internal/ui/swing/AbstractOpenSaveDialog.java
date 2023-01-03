@@ -49,6 +49,9 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		this(400);
 	} 
 
+	protected void updateSearchTable(){
+		//does nothing, children implementations should override
+	}
 	
 	/**
 	 * Creates the horizontal panel at the top containing the NDEx sign in button
@@ -138,7 +141,7 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 				}
 		}
 	}
-	
+
 	protected void updateSearchTable(final String searchString){
 		if (_searchTableModel == null){
 			return;
@@ -171,8 +174,8 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		if (isVisible()) {
 			ModalProgressHelper.runWorker(null, "Loading Profile", () -> {
 				_ndexSignInButton.setText(SignInButtonHelper.getSignInText());
-				_myNetworksTableModel.clearNetworkSummaries();
 				updateMyNetworksTable();
+				updateSearchTable();
 				return 1;
 			});
 		}

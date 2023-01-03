@@ -97,8 +97,8 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	private JTextField _ndexMyNetworksSearchField;
 	private JTextField _ndexSearchField;
 	private TableRowSorter _myNetworksTableSorter;
-	private JButton _ndexSearchButton;
 	private JTable _myNetworksTable;
+	private JTable _searchTable;
 	
 	/**
 	 * Flag to denote whether the open NDEx panel has ever been displayed
@@ -462,38 +462,38 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 	
 	private void createNDExSearchAllTabbedPane(){
 		
-		JTable searchTable = new JTable(_searchTableModel);
-		searchTable.setAutoCreateRowSorter(true);
+		_searchTable = new JTable(_searchTableModel);
+		_searchTable.setAutoCreateRowSorter(true);
 		List<RowSorter.SortKey> sortKeys = new ArrayList<>();
 		sortKeys.add(new RowSorter.SortKey(MyNetworksWithOwnerTableModel.MODIFIED_COL, SortOrder.DESCENDING));
-		searchTable.getRowSorter().setSortKeys(sortKeys);
+		_searchTable.getRowSorter().setSortKeys(sortKeys);
 		
-		searchTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
-        searchTable.setFillsViewportHeight(true);
-		searchTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		searchTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
-		searchTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+		_searchTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
+        _searchTable.setFillsViewportHeight(true);
+		_searchTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		_searchTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
+		_searchTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent event) {
-				if (searchTable.getSelectedRow() == -1){
+				if (_searchTable.getSelectedRow() == -1){
 					LOGGER.debug("Nothing selected, disabling open button");
 					_mainOpenButton.setEnabled(false);
 					_selectedNDExSearchNetworkIndex = -1;
 				} else {
-					LOGGER.debug(event.toString() + " " + searchTable.getValueAt(searchTable.getSelectedRow(), 0).toString());
-					LOGGER.debug("\t" + _searchTableModel.getNetworkSummaries().get(searchTable.getSelectedRow()).getName());
+					LOGGER.debug(event.toString() + " " + _searchTable.getValueAt(_searchTable.getSelectedRow(), 0).toString());
+					LOGGER.debug("\t" + _searchTableModel.getNetworkSummaries().get(_searchTable.getSelectedRow()).getName());
 					_mainOpenButton.setEnabled(true);
-					_selectedNDExSearchNetworkIndex = searchTable.convertRowIndexToModel(searchTable.getSelectedRow());
+					_selectedNDExSearchNetworkIndex = _searchTable.convertRowIndexToModel(_searchTable.getSelectedRow());
 				}
 			}
         });
-		searchTable.addMouseListener(new MouseAdapter() {
+		_searchTable.addMouseListener(new MouseAdapter() {
          public void mouseClicked(MouseEvent me) {
             if (me.getClickCount() == 2) {     // to detect doble click events
                JTable target = (JTable)me.getSource();
                int row = target.getSelectedRow(); // select a row
 			   if (row != -1){
-	               LOGGER.debug("Double click: " + searchTable.getValueAt(searchTable.getSelectedRow(), 0).toString());
-				   _selectedNDExSearchNetworkIndex = searchTable.convertRowIndexToModel(searchTable.getSelectedRow());
+	               LOGGER.debug("Double click: " + _searchTable.getValueAt(_searchTable.getSelectedRow(), 0).toString());
+				   _selectedNDExSearchNetworkIndex = _searchTable.convertRowIndexToModel(_searchTable.getSelectedRow());
 				   _mainOpenButton.doClick();
 			   }
 			   
@@ -519,29 +519,39 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 				updateSearchTable();
 			}
 		});
+		_ndexSearchField.getDocument().addDocumentListener(new DocumentListener(){
+			//There are three events that need to be monitored to catch changes to a text
+			//field
+				@Override
+				public void insertUpdate(DocumentEvent e){
+					updateSearchTable();
+					_mainOpenButton.setEnabled(_searchTable.getSelectedRow() != -1);
+				}
+				@Override
+				public void removeUpdate(DocumentEvent e){
+					updateSearchTable();
+					_mainOpenButton.setEnabled(_searchTable.getSelectedRow() != -1);
+					
+				}
+				@Override
+				public void changedUpdate(DocumentEvent e){
+					updateSearchTable();
+					_mainOpenButton.setEnabled(_searchTable.getSelectedRow() != -1);
+				}
+			});
 		searchSearchPanel.add(_ndexSearchField, BorderLayout.LINE_START);
-		_ndexSearchButton = new JButton("search");
-		_ndexSearchButton.setToolTipText("Search all of NDEx for networks");
-		_ndexSearchButton.addActionListener(new ActionListener(){
-			@Override
-			public void actionPerformed(ActionEvent e){
-				updateSearchTable();
-				
-			}
-		});
 		
-		_ndexSearchButton.setPreferredSize(new Dimension(_ndexSearchButton.getPreferredSize().width,22));
-		searchSearchPanel.add(_ndexSearchButton, BorderLayout.LINE_END);
 		
 		searchPanel.add(searchSearchPanel, BorderLayout.PAGE_START);
 		searchPanel.setName(SEARCH_NETWORKS_TABBED_PANE);
-		JScrollPane scrollPane = new JScrollPane(searchTable);
+		JScrollPane scrollPane = new JScrollPane(_searchTable);
 		scrollPane.setPreferredSize(new Dimension(570,250));
 		searchPanel.add(scrollPane, BorderLayout.PAGE_END);		
 		_ndexTabbedPane.add("Search NDEx", searchPanel);
 	}
 	
-	private void updateSearchTable(){
+	@Override
+	protected void updateSearchTable(){
 		_searchTableModel.clearNetworkSummaries();
 		try {
 			updateSearchTable(_ndexSearchField.getText());
