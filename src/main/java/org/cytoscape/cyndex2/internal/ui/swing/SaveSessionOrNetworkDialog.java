@@ -263,6 +263,8 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		openDialogPanel.setPreferredSize(_dialogDimension);
         JPanel leftPanel = new JPanel();
         leftPanel.setPreferredSize(_leftPanelDimension);
+		// to get NDEx icon this might work?
+		//https://stackoverflow.com/questions/52460488/it-is-possible-to-add-a-html-img-to-jbutton
         _saveNDExButton = new JButton("<html><font color=\"#000000\">Save Network<br/><br/><font size=\"-2\">Save the currently selected network to NDEx</font></font></html>");
 		_saveNDExButton.setOpaque(true);
         _saveNDExButton.setPreferredSize(_leftButtonsDimensions);

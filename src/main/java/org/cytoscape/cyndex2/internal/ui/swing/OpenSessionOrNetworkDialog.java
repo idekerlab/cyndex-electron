@@ -234,6 +234,8 @@ public class OpenSessionOrNetworkDialog extends AbstractOpenSaveDialog {
         leftPanel.setPreferredSize(_leftPanelDimension);
 		
 		//using html fragment to set color and size of text
+		// to get NDEx icon this might work?
+		//https://stackoverflow.com/questions/52460488/it-is-possible-to-add-a-html-img-to-jbutton
         _openNDExButton = new JButton("<html><font color=\"#000000\">Open Network<br/><br/><font size=\"-2\">Open a network from NDEx</font></font></html>");
 		_openNDExButton.setOpaque(true);
         _openNDExButton.setPreferredSize(_leftButtonsDimensions);
