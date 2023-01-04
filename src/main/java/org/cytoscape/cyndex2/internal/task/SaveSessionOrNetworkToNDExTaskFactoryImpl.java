@@ -9,6 +9,7 @@ import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.cyndex2.internal.errors.NetworkNotFoundInNDExException;
 import org.cytoscape.cyndex2.internal.errors.ReadOnlyException;
 import org.cytoscape.cyndex2.internal.errors.RemoteModificationException;
+import org.cytoscape.cyndex2.internal.errors.WritePermissionException;
 import org.cytoscape.cyndex2.internal.rest.parameter.NDExBasicSaveParameters;
 import org.cytoscape.cyndex2.internal.ui.swing.SaveSessionOrNetworkDialog;
 import org.cytoscape.cyndex2.internal.util.NDExNetworkManager;
@@ -153,19 +154,19 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 						return ti; 
 					}
 			} catch(NetworkNotFoundInNDExException nfe){
-				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network is linked to network in NDEx, but that network\n("
-					+ savedUUID.toString()	+ ")\ndoes not exist or is not accessible on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n" + 
+				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), nfe.getMessage() + "\n\nNetwork is linked to a network in NDEx, but that network\n"
+					+ "\ndoes not exist or is not accessible on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n" + 
 							"for user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + "\n\nClick ok to display Save Network As dialog");
 			} catch(ReadOnlyException re){
-				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network \n("
-					+ savedUUID.toString()	+ ")\nis set to read only on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n" + 
+				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network is set to read only on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " NDEx server\n" + 
 							"for user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + " and cannot be saved.\n\nClick ok to display Save Network As dialog");
-				
+			} catch(WritePermissionException wpe){
+				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "You do not have permission to overwrite this network on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " NDEx server\n" + 
+							"as user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + "\n\nClick ok to display Save Network As dialog");
 			}catch(Exception ex){
 				ex.printStackTrace();
-
-				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Save error, due to this error:\n\n"
-						+ ex.getMessage() + "\n\nGoing to bring up save as dialog, but let Cytoscape developers know how you want to proceed?");         
+				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Unable to save due to this error:\n\n"
+						+ ex.getMessage() + "\n\nClick ok to display Save Network As dialog");         
 			}
 		}
 		

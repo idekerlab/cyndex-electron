@@ -50,12 +50,24 @@ public class UpdateUtil {
 		if (uuid == null) {
 			throw new NetworkNotFoundInNDExException("UUID unknown. Can't find current Network in NDEx.");
 		}
-
+		NetworkSummary ns = null;
+		
 		try {
 
 			Map<String, Permissions> permissionTable = mal.getUserNetworkPermission(nc.getUserUid(), uuid, false);
-			if (permissionTable == null || permissionTable.isEmpty()) {
-				throw new NetworkNotFoundInNDExException("Cannot find network.");
+			if (permissionTable == null || permissionTable.isEmpty()){
+				// see if network even exists
+				try {
+					ns = mal.getNetworkSummaryById(uuid);
+					if (ns != null){
+						throw new WritePermissionException("You don't have permission to write to this network.");
+	
+					} else {
+						throw new NetworkNotFoundInNDExException("Network does not exist.");
+					}
+				} catch(IOException | NdexException e) {
+					throw new CheckPermissionException("An error occurred while checking permissions. " + e.getMessage());
+				}
 			} else if (permissionTable.get(uuid.toString()) == Permissions.READ) {
 				throw new WritePermissionException("You don't have permission to write to this network.");
 			}
@@ -64,7 +76,7 @@ public class UpdateUtil {
 			throw new ReadPermissionException("Unable to read network permissions. " + e.getMessage());
 		}
 
-		NetworkSummary ns = null;
+		
 		try {
 			ns = mal.getNetworkSummaryById(uuid);
 

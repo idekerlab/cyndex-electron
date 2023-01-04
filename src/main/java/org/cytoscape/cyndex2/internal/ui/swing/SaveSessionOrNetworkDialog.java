@@ -141,41 +141,11 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 							List<NetworkSummary> matchingNetworks = SaveSessionOrNetworkDialog.this._myNetworksTableModel.getNetworksMatchingName(_ndexSaveAsTextField.getText());
 
 							if (matchingNetworks != null && matchingNetworks.size() > 0){
-								if (matchingNetworks.size() == 1 || SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
-
-									NetworkSummary selectedNetwork = null;
-									if (SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() != null){
-										selectedNetwork = SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork();
-									} else {
-										selectedNetwork = matchingNetworks.get(0);
-									}
-									String netName = selectedNetwork.getName() == null ? "" : selectedNetwork.getName(); 
-									//user selected a network so lets verify they want to overwrite
-									Object[] options = {"Yes", "No"};
-									int res = _dialogUtil.showOptionDialog(pane, "Do you wish to overwrite " + 
-													netName + "?","NDEx Overwrite",
-											JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-											options, options[1]);
-									if (res == 1){
-										LOGGER.debug("User did not want to overwrite. just return");
-										_ndexNetworkToOverwrite = null;
-										return;
-									}
-									if (res == 0){
-										LOGGER.debug("User does want to overwrite this network: "
-												+ selectedNetwork.getName() == null ? "" : selectedNetwork.getName());
-										_ndexNetworkToOverwrite = selectedNetwork;
-										// user does want to overwrite so click save button
-										pane.setValue(_mainSaveButton);
-										return;
-									}
-								}
-								if (SaveSessionOrNetworkDialog.this.getNDExSelectedNetwork() == null){
+								
 									LOGGER.debug("User wishes to save, but " + Integer.toString(matchingNetworks.size())
 											+ " networks match the name. Asking user to change name or select a network to overwrite");
 									_dialogUtil.showMessageDialog(SaveSessionOrNetworkDialog.this, Integer.toString(matchingNetworks.size()) 
-											+ " networks match that name.\nPlease click ok and select one to overwrite or choose a different name");
-								}
+											+ " networks match that name.\nPlease click ok and choose a different name");
 								return;
 							}
 						}
@@ -547,6 +517,9 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 		// add NDEx sign in panel to top of dialog
 		_ndexPanel.add(getNDExSignInPanel(), BorderLayout.PAGE_START);
 	
+		_ndexTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		_ndexTabbedPane.setPreferredSize(new Dimension(600, 330));
+		
 		JPanel saveAsPanel = new JPanel();
 		JLabel saveAsLabel = new JLabel("<html><font color=\"#000000\">Save As:</font></html>");
 		saveAsPanel.add(saveAsLabel, BorderLayout.LINE_START);
@@ -575,9 +548,12 @@ public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
 				}
 			});
 		saveAsPanel.add(_ndexSaveAsTextField, BorderLayout.LINE_END);
-		_ndexPanel.add(saveAsPanel, BorderLayout.PAGE_START);
+		//_ndexPanel.add(saveAsPanel, BorderLayout.PAGE_START);
 		JScrollPane scrollPane = new JScrollPane(getMyNetworksJTable());
-		scrollPane.setPreferredSize(new Dimension(570,150));
-		_ndexPanel.add(scrollPane, BorderLayout.PAGE_START);
+		scrollPane.setPreferredSize(new Dimension(570,245));
+		//_ndexPanel.add(scrollPane, BorderLayout.PAGE_START);
+		saveAsPanel.add(scrollPane, BorderLayout.PAGE_END);
+		_ndexTabbedPane.add("My Networks", saveAsPanel);
+		_ndexPanel.add(_ndexTabbedPane, BorderLayout.PAGE_START);
 	}
 }
