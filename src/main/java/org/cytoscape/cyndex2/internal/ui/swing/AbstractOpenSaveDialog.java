@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.cytoscape.cyndex2.internal.util.ErrorMessage;
+import org.cytoscape.cyndex2.internal.util.IconUtil;
 import org.cytoscape.cyndex2.internal.util.Server;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 import org.ndexbio.model.exceptions.NdexException;
@@ -72,8 +74,9 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		c.anchor = GridBagConstraints.EAST;
 		c.gridx = 0;
 		c.gridy = 0;
-		// @TODO add NDEx logo to this
+		c.insets = new Insets(0,10,0,0);
 		JLabel ndexLabel = new JLabel("NDEx");
+		ndexLabel.setIcon(IconUtil.getNdexIcon());
 		topPanel.add(ndexLabel, c);
 
 		// could just use a filler but this works
@@ -93,6 +96,7 @@ public class AbstractOpenSaveDialog extends JPanel implements PropertyChangeList
 		c.gridwidth = 2;
 		c.gridy = 0;
 		c.weightx = 1.0;
+		c.insets = new Insets(0,0,0,5);
 		topPanel.add(_ndexSignInButton, c);
 		
 		return topPanel;
