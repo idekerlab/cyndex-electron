@@ -89,7 +89,7 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
 				NetworkSummary netSummary = _dialog.getNDExSelectedNetwork();
 				if (netSummary != null){
 					try{
-						NdexRestClientModelAccessLayer client = ServerManager.INSTANCE.getSelectedServer().getModelAccessLayer();
+						NdexRestClientModelAccessLayer client = ServerManager.INSTANCE.getServer().getModelAccessLayer();
 						return new TaskIterator(1, new NetworkImportTask(client,
 								netSummary.getExternalId(), null, true));
 					} catch(Exception e){
