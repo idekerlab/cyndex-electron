@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPopupMenu;
 
@@ -17,9 +18,9 @@ import org.cytoscape.util.swing.TextIcon;
 
 public class SignInButtonHelper {
 
-    public static JButton createSignInButton(JDialog frame) {
-        //Create the popup menu.
-        final JPopupMenu popup = new ProfilePopupMenu(frame);
+	public static JButton createSignInButton(JDialog frame, JComponent parentComponent){
+		 //Create the popup menu.
+        final JPopupMenu popup = new ProfilePopupMenu(frame, parentComponent);
       	Font font = IconUtil.getAppFont(23f);
     		int iconSize = 24;
       	Icon icon = new TextIcon(IconUtil.ICON_NDEX_ACCOUNT, font, iconSize, iconSize);
@@ -34,6 +35,10 @@ public class SignInButtonHelper {
             }
         });
         return signInButton;
+	}
+	
+    public static JButton createSignInButton(JDialog frame) {
+       return createSignInButton(frame, null);
     }
 
     public static String getSignInText() {
