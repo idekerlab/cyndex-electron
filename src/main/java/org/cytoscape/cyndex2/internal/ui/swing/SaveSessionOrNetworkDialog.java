@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
  * #L%
  */
 @SuppressWarnings("serial")
-public class SaveSessionOrNetworkDialog extends AbstractOpenSaveDialog {
+public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	private final static Logger LOGGER = LoggerFactory.getLogger(SaveSessionOrNetworkDialog.class);
 	public final static String SAVE_SESSION = "SaveSession";
 	public final static String SAVE_NDEX = "SaveNDEx";
