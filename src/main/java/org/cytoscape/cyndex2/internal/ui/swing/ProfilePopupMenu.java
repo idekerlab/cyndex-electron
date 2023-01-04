@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -30,9 +31,15 @@ public class ProfilePopupMenu extends JPopupMenu {
  	static final Icon PROFILE_ICON = new TextIcon(IconUtil.ICON_NDEX_ACCOUNT, font, iconSize, iconSize);
 	
  	final JDialog parent;
- 	
-	public ProfilePopupMenu(JDialog frame) {
+ 	final JComponent parentComponent;
+	
+	public ProfilePopupMenu(JDialog frame, JComponent parentComponent){
 		this.parent = frame;
+		this.parentComponent = parentComponent;
+	}
+	
+	public ProfilePopupMenu(JDialog frame) {
+		this(frame, null);
 	}
 
 	public void show(Component invoker, int x, int y) {
@@ -99,7 +106,11 @@ public class ProfilePopupMenu extends JPopupMenu {
 		add(new JMenuItem(new AbstractAction("Add new profile...", ADD_PROFILE_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				SignInDialog signInDialog = new SignInDialog(parent);
-				signInDialog.setLocationRelativeTo(parent);
+				if (parent != null){
+					signInDialog.setLocationRelativeTo(parent);
+				} else {
+					signInDialog.setLocationRelativeTo(parentComponent);
+				}
 				signInDialog.setVisible(true);
 			}
 		}));
