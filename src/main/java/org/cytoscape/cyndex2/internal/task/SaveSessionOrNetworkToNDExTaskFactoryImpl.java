@@ -186,16 +186,7 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
                            options[0]);
 		// if res is 0 then the user wants to save the network or session
         if (res == 0){
-			// if open session card was displayed see if there is a file to load
-			if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_SESSION)){
-				File sessionFile = _dialog.getSelectedSessionFile();
-				if (sessionFile != null){
-					LOGGER.debug("selected session file is: " + sessionFile.getAbsolutePath());
-					return new TaskIterator(1, new SaveSessionAsTask(sessionFile, serviceRegistrar));
-				} else {
-					LOGGER.debug("selected session file is null");
-				}
-			} else if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
+			if (_dialog.getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
 
 				// Need to determine if an overwrite is desired
                 NetworkSummary overwriteNetwork = _dialog.getNDExNetworkUserWantsToOverwrite();
