@@ -66,7 +66,6 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("serial")
 public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	private final static Logger LOGGER = LoggerFactory.getLogger(OpenSessionOrNetworkDialog.class);
-	public final static String OPEN_SESSION = "OpenSession";
 	public final static String OPEN_NDEX = "OpenNDEx";
 	public final static String SIGN_IN = "Sign in";
 	public final static String SIGN_OUT = "Sign out";
@@ -74,11 +73,9 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	public final static String SEARCH_NETWORKS_TABBED_PANE = "";
 	private boolean _guiLoaded;
 	private JPanel _cards;
-	private JButton _openSessionButton;
 	private JButton _openNDExButton;
 	private JButton _mainOpenButton;
 	private JButton _mainCancelButton;
-	private JFileChooser _sessionChooser;
 	private JPanel _ndexPanel;
 	private JTabbedPane _ndexTabbedPane;
 	
@@ -197,13 +194,6 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	 * @return 
 	 */
 	public File getSelectedSessionFile(){
-		if (getSelectedCard() != null && getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_SESSION)){
-			
-			if (_sessionChooser.getSelectedFile() != null && _sessionChooser.getSelectedFile().isFile()){
-				return _sessionChooser.getSelectedFile();
-			}
-			return null;
-		}
 		return null;
 	}
 	
@@ -252,10 +242,8 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 				CardLayout cl = (CardLayout)_cards.getLayout();
 				cl.show(_cards, OpenSessionOrNetworkDialog.OPEN_NDEX);
 				_openNDExButton.setBackground(_NDExButtonBlue);
-				_openSessionButton.setBackground(_defaultButtonColor);
 				_selectedCard = OpenSessionOrNetworkDialog.OPEN_NDEX;
 				setButtonFocus(true, _openNDExButton);
-				setButtonFocus(false, _openSessionButton);
 				// need to figure out if this should be enabled or not
 				_mainOpenButton.setEnabled(false);
 				if (_ndexNeverDisplayed == true){
@@ -274,35 +262,6 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		
         leftPanel.add(_openNDExButton, BorderLayout.PAGE_START);
 
-		//using html fragment to set color and size of text
-        _openSessionButton = new JButton("<html><font color=\"#000000\">Open Session<br/><br/><font size=\"-2\">Open a session (.cys) file from the local machine</font></font></html>");
-		_openSessionButton.setOpaque(true);
-        _openSessionButton.setPreferredSize(_leftButtonsDimensions);
-
-		_openSessionButton.addActionListener(new ActionListener() {
-			/**
-			 * When a user clicks on the open session button need to change
-			 * the background for the open ndex button and for open session 
-			 * button. Also need to determine if the open button should be
-			 * enabled or not
-			 */
-			@Override
-			public void actionPerformed(ActionEvent e){
-				CardLayout cl = (CardLayout)_cards.getLayout();
-				cl.show(_cards, OpenSessionOrNetworkDialog.OPEN_SESSION);
-				_openNDExButton.setBackground(_defaultButtonColor);
-				_openSessionButton.setBackground(_SessionButtonOrange);
-				_selectedCard = OpenSessionOrNetworkDialog.OPEN_SESSION;
-				setButtonFocus(false, _openNDExButton);
-				setButtonFocus(true, _openSessionButton);
-				if (getSelectedSessionFile() != null){
-					_mainOpenButton.setEnabled(true);
-				} else {
-					_mainOpenButton.setEnabled(false);
-				}
-			}
-		});
-		leftPanel.add(_openSessionButton, BorderLayout.PAGE_END);
         openDialogPanel.add(leftPanel, BorderLayout.LINE_START);
 
         JPanel rightPanel = getRightCardPanel();
@@ -312,67 +271,14 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		
 	}
 	
-	private void createJFileChooser(){
-		_sessionChooser = new JFileChooser(".");
-		_sessionChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		_sessionChooser.setControlButtonsAreShown(false);
-		_sessionChooser.addPropertyChangeListener(new PropertyChangeListener() {
-			/**
-			 * Watch for File changed event and if the user selected a file enable the
-			 * open button otherwise disable the open button
-			 * @param evt 
-			 */
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (JFileChooser.SELECTED_FILE_CHANGED_PROPERTY.equals(evt.getPropertyName())){
-					if (evt.getNewValue() != null){
-						// This event fires if a directory is selected
-						// so we need to check for that
-						File selectedFile = (File)evt.getNewValue();
-					
-						if (selectedFile.isFile()){
-							_mainOpenButton.setEnabled(true);
-						} else {
-							_mainOpenButton.setEnabled(false);
-						}
-					} else {
-						_mainOpenButton.setEnabled(false);
-					}
-				}
-            }
-		});
-
-		_sessionChooser.addActionListener(new ActionListener(){
-			
-			/**
-			 * Look for double click on a file in the Chooser, if found then assume
-			 * the user wants to load that file so simulate a click of the Open button
-			 * @param evt 
-			 */
-			@Override
-			public void actionPerformed(ActionEvent evt){
-				if (JFileChooser.APPROVE_SELECTION.equals(evt.getActionCommand())){
-					LOGGER.debug(evt.getActionCommand() + " " + evt.getSource());
-					if (getSelectedSessionFile() != null && getSelectedSessionFile().isFile()){
-						_mainOpenButton.doClick();
-					}
-				}
-			}
-		});
-
-	}
+	
 	
 	private JPanel getRightCardPanel(){
 		_cards = new JPanel(new CardLayout());
         _cards.setPreferredSize(this._rightPanelDimension);
 		
-		createJFileChooser();
-		
 		CardLayout cl = (CardLayout)_cards.getLayout();
-		
-		_cards.add(_sessionChooser, OpenSessionOrNetworkDialog.OPEN_SESSION);
-		cl.addLayoutComponent(_sessionChooser, OpenSessionOrNetworkDialog.OPEN_SESSION);
-		_selectedCard = OpenSessionOrNetworkDialog.OPEN_SESSION;
+		_selectedCard = OpenSessionOrNetworkDialog.OPEN_NDEX;
 		
 		createNDExPanel();
 		_cards.add(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
