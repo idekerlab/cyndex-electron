@@ -1,6 +1,7 @@
 package org.cytoscape.cyndex2.internal.ui.swing;
 
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -8,6 +9,9 @@ import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -79,7 +83,14 @@ public class BaseOpenSaveDialog extends JPanel implements PropertyChangeListener
 		c.gridy = 0;
 		c.insets = new Insets(0,10,0,0);
 		JLabel ndexLabel = new JLabel("NDEx");
+		ndexLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 		ndexLabel.setIcon(IconUtil.getNdexIcon());
+		ndexLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+			public void mouseClicked(java.awt.event.MouseEvent evt) {
+				ndexLabelMouseClicked(evt);
+            }
+        });
 		topPanel.add(ndexLabel, c);
 
 		// could just use a filler but this works
@@ -185,6 +196,15 @@ public class BaseOpenSaveDialog extends JPanel implements PropertyChangeListener
 				return 1;
 			});
 		}
+	}
+	
+	private void ndexLabelMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_forgotPasswordLabelMouseClicked
+
+		try {
+			Desktop.getDesktop().browse(new URI(ServerManager.addHttpsProtocol(ServerManager.INSTANCE.getServer().getUrl().equals(Server.DEFAULT_SERVER.getUrl()) ? "www.ndexbio.org" : ServerManager.INSTANCE.getServer().getUrl())));
+		} catch (URISyntaxException | IOException ex) {
+			LOGGER.error("Unable to launch browser to display NDEx site", ex);
+	    }
 	}
 	
 }
