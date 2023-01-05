@@ -77,15 +77,8 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
                            options,
                            options[0]);
 		// if res is 0 then the user wants to open the network
-        if (res == 0){
-			// if open session card was displayed see if there is a file to load
-			if (_dialog.getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_SESSION)){
-				File sessionFile = _dialog.getSelectedSessionFile();
-				if (sessionFile != null){
-					return new TaskIterator(1, new OpenSessionTask(sessionFile, serviceRegistrar));
-				}
-			// else if ndex card was displayed, see if there is a network to load
-			} else if (_dialog.getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
+        if (res == 0){			
+			if (_dialog.getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
 				NetworkSummary netSummary = _dialog.getNDExSelectedNetwork();
 				if (netSummary != null){
 					try{
