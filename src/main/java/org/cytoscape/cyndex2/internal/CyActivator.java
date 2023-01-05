@@ -53,6 +53,7 @@ import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.NetworkCollectionTaskFactory;
 import org.cytoscape.task.RootNetworkCollectionTaskFactory;
 import static org.cytoscape.work.ServiceProperties.ACCELERATOR;
+import static org.cytoscape.work.ServiceProperties.INSERT_SEPARATOR_AFTER;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP_LONG_DESCRIPTION;
 import org.cytoscape.work.TaskFactory;
@@ -203,20 +204,24 @@ public class CyActivator extends AbstractCyActivator {
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
 				JMenuItem curMenuItem = (JMenuItem)c;
-				if (curMenuItem.getText().equals("Open...")){
+				if (curMenuItem.getText().equals("Open...") || curMenuItem.getText().equals("Open Session...")){
 					curMenuItem.setText("Open Session...");
 					curMenuItem.setAccelerator(null);
 					openUpdated = true;
 					
-				} else if (curMenuItem.getText().equals("Save")){
+				} else if (curMenuItem.getText().equals("Save") || curMenuItem.getText().equals("Save Session")){
 					curMenuItem.setText("Save Session");
 					curMenuItem.setAccelerator(null);
 					saveUpdated = true;
 
-				} else if (curMenuItem.getText().equals("Save As...")){
+				} else if (curMenuItem.getText().equals("Save As...") || curMenuItem.getText().equals("Save Session As...")){
 					curMenuItem.setText("Save Session As...");
 					curMenuItem.setAccelerator(null);
 					saveAsUpdated = true;
+				} else if (curMenuItem.getText().equals("Open Recent")){
+					curMenuItem.setText("Open Recent Session");
+				} else if (curMenuItem.getText().equals("Close")){
+					curMenuItem.setText("Close Session");
 				}
 			}
 		}
@@ -299,17 +304,15 @@ public class CyActivator extends AbstractCyActivator {
 		final OpenSessionOrNetworkFromNDExTaskFactoryImpl openSessionOrNetworkFac = new OpenSessionOrNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
 		final Properties ndexOpenNetworkTaskFactoryProps = new Properties();
 		ndexOpenNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
-		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP, "Open Network from NDEx or Session");
-		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Open Network from NDEx or Session");
+		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP, "Open Network from NDEx");
+		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Open Network from NDEx");
 		ndexOpenNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "1.0");
 
-		String openName = "Open Network";
 		if (menusRenamed == true){
-			openName = "Open...";
-			ndexOpenNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.9");
+			ndexOpenNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.1");
 			ndexOpenNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd o");
 		}
-		ndexOpenNetworkTaskFactoryProps.setProperty(TITLE, openName);
+		ndexOpenNetworkTaskFactoryProps.setProperty(TITLE, "Open Network");
 		//ndexOpenNetworkTaskFactoryProps.setProperty(TOOL_BAR_GRAVITY, "1.1");
 		//ndexOpenNetworkTaskFactoryProps.setProperty(IN_TOOL_BAR, "true");
 		
@@ -322,14 +325,12 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ID, "saveSessionOrNetworkToCloudTaskFactory");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
 		
-		String saveName = "Save Network";
 		if (menusRenamed == true){
-			saveName = "Save";
 			ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd s");
 		}
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TITLE, saveName);
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TITLE, "Save Network");
 		
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "1.4");
+		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.2");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
 		registerService(bc, saveSessionOrNetworkFac, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryProps);
@@ -339,13 +340,12 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(ID, "saveSessionOrNetworkToCloudAlwaysPromptTaskFactory");
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(PREFERRED_MENU, "File");
 		
-		String saveAsName = "Save Network As...";
 		if (menusRenamed == true){
-			saveAsName = "Save As...";
 			ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(ACCELERATOR, "cmd shift s");
 		}
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TITLE, saveAsName);
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(MENU_GRAVITY, "1.5");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TITLE, "Save Network As...");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(MENU_GRAVITY, "0.3");
+		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(INSERT_SEPARATOR_AFTER, "true");
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
 		registerService(bc, saveSessionOrNetworkFacAlwaysPrompt, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryPropsPrompt);
