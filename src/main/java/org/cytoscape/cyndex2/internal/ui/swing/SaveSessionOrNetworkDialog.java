@@ -172,10 +172,7 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		_saveNDExButton.setEnabled(_enabledNDExSave);
 		if (_enabledNDExSave == true){
 			_saveNDExButton.doClick();
-		} else {
-			_saveSessionButton.doClick();
-		}
-
+		} 
 		_ndexNetworkToOverwrite = null;
 		return true;
 	}
@@ -202,29 +199,6 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	 * @return 
 	 */
 	public File getSelectedSessionFile(){
-		if (getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_SESSION)){
-			if (_sessionChooser.getSelectedFile() != null){
-				// handle case where user types into save as dialog a different path
-				// just go with that.
-				if (!_sessionChooser.getSelectedFile().getName().equals(_saveAsTextField.getText())){
-					if (_saveAsTextField.getText().startsWith("/")){
-						LOGGER.debug("Path starts with / so returning "
-								+ _saveAsTextField.getText() + " as desired save path");
-						return new File(_saveAsTextField.getText());
-					}
-					String desiredFile = _sessionChooser.getCurrentDirectory() + File.separator + _saveAsTextField.getText();
-					LOGGER.debug("Using save as text field since it differs from file selection: " + desiredFile);
-					return new File(desiredFile);
-				}
-				return _sessionChooser.getSelectedFile();
-			}
-			if (_saveAsTextField.getText().trim().length() > 0){
-				String desiredFile = _sessionChooser.getCurrentDirectory() + File.separator + _saveAsTextField.getText();
-					LOGGER.debug("selected file is null but save as text field has a value, using: " + desiredFile);
-					return new File(desiredFile);
-			}
-			return null;
-		}
 		return null;
 	}
 	
@@ -281,9 +255,7 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 				CardLayout cl = (CardLayout)_cards.getLayout();
 				cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_NDEX);
 				_saveNDExButton.setBackground(_NDExButtonBlue);
-				_saveSessionButton.setBackground(_defaultButtonColor);
 				setButtonFocus(true, _saveNDExButton);
-				setButtonFocus(false, _saveSessionButton);
 				_selectedCard = SaveSessionOrNetworkDialog.SAVE_NDEX;
 				_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 			}
@@ -291,134 +263,20 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		
         leftPanel.add(_saveNDExButton, BorderLayout.PAGE_START);
 
-        _saveSessionButton = new JButton("<html><font color=\"#000000\">Save Session<br/><br/><font size=\"-2\">Save a session (.cys) file on this computer</font></html>");
-		_saveSessionButton.setOpaque(true);
-        _saveSessionButton.setPreferredSize(_leftButtonsDimensions);
-
-        _saveSessionButton.addActionListener(new ActionListener() {
-                /**
-                 * When a user clicks on the save session button need to change
-                 * the background for the save ndex button and for save session 
-                 * button. Also need to determine if the open button should be
-                 * enabled or not
-                 */
-                @Override
-                public void actionPerformed(ActionEvent e){
-					CardLayout cl = (CardLayout)_cards.getLayout();
-					cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_SESSION);
-					_saveNDExButton.setBackground(_defaultButtonColor);
-					_saveSessionButton.setBackground(_SessionButtonOrange);
-					setButtonFocus(false, _saveNDExButton);
-					setButtonFocus(true, _saveSessionButton);
-
-					_selectedCard = SaveSessionOrNetworkDialog.SAVE_SESSION;
-					if (_saveAsTextField == null){
-						_mainSaveButton.setEnabled(true);
-					} else {
-						_mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
-					}
-                }
-        });
-
-	leftPanel.add(_saveSessionButton, BorderLayout.PAGE_END);
+        
         openDialogPanel.add(leftPanel, BorderLayout.LINE_START);
 
         JPanel rightPanel = getRightCardPanel();
         openDialogPanel.add(rightPanel, BorderLayout.LINE_END);
             return openDialogPanel;
 	}
-	
-	/**
-	 * Finds the JTextField in the JChooser save dialog by recursively
-	 * searching through the first JPanel found in the JChooser dialog
-	 * @return 
-	 */
-	private JTextField getJChooserSaveAsTextField(){
-		for (Component c : _sessionChooser.getComponents()){
-			if (c instanceof JPanel){
-				return searchForJTextFieldInJPanel((JPanel)c);
-			}
-		}
-		LOGGER.debug("Unable to find Save As Text Field in File Chooser");
-		return null;
-	}
-	
-	/**
-	 * Recursively finds the the first JTextField encountered
-	 * @param panel
-	 * @return 
-	 */
-	private JTextField searchForJTextFieldInJPanel(JPanel panel){
-		for (Component subc : panel.getComponents()){
-			if (subc instanceof JTextField){
-				return (JTextField)subc;
-			}
-			if (subc instanceof JPanel){
-				return searchForJTextFieldInJPanel((JPanel)subc);
-			}
-		}
-		LOGGER.debug("Unable to find Save As Text Field in File Chooser");
-		return null;
-	}
-	
-	private void createJFileChooser(){
-		// TODO need to set the directory to current default...
-		_sessionChooser = new JFileChooser(".");
-		_sessionChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-		_sessionChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		_sessionChooser.setControlButtonsAreShown(false);
 
-		// listen for any text changes in the save as text field so we know
-		// to enable/disable the save button for the dialog
-		_saveAsTextField = getJChooserSaveAsTextField();
-		if (_saveAsTextField != null){
-			_saveAsTextField.getDocument().addDocumentListener(new DocumentListener(){
-				@Override
-				public void insertUpdate(DocumentEvent e){
-					_mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
-				}
-				@Override
-				public void removeUpdate(DocumentEvent e){
-					_mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
-					
-				}
-				@Override
-				public void changedUpdate(DocumentEvent e){
-					_mainSaveButton.setEnabled(_saveAsTextField.getText().length() > 0);
-				}
-			});
-		}
-
-		_sessionChooser.addActionListener(new ActionListener(){
-			
-			/**
-			 * Look for user hitting enter on the save as text field
-			 * @param evt 
-			 */
-			@Override
-			public void actionPerformed(ActionEvent evt){
-				if (JFileChooser.APPROVE_SELECTION.equals(evt.getActionCommand())){
-					LOGGER.debug(evt.getActionCommand() + " " + evt.getSource());
-					if (getSelectedSessionFile() != null){
-						_mainSaveButton.doClick();
-					} else {
-						_mainSaveButton.setEnabled(false);
-					}
-				}
-			}
-		});
-
-	}
-	
 	private JPanel getRightCardPanel(){
 		_cards = new JPanel(new CardLayout());
         _cards.setPreferredSize(this._rightPanelDimension);
 		
-		createJFileChooser();		
 		CardLayout cl = (CardLayout)_cards.getLayout();
-		_cards.add(_sessionChooser, SaveSessionOrNetworkDialog.SAVE_SESSION);
-		cl.addLayoutComponent(_sessionChooser, SaveSessionOrNetworkDialog.SAVE_SESSION);
-		_selectedCard = SaveSessionOrNetworkDialog.SAVE_SESSION;
+		_selectedCard = SaveSessionOrNetworkDialog.SAVE_NDEX;
 		
 		createNDExPanel();
 		_cards.add(_ndexPanel, SaveSessionOrNetworkDialog.SAVE_NDEX);
