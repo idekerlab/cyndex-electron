@@ -17,6 +17,8 @@ import javax.swing.JPopupMenu;
 import org.cytoscape.application.swing.AbstractCyAction;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.cyndex2.internal.CyActivator;
+import org.cytoscape.cyndex2.internal.task.OpenSessionOrNetworkFromNDExTaskFactoryImpl;
+import org.cytoscape.cyndex2.internal.task.SaveSessionOrNetworkToNDExTaskFactoryImpl;
 import org.cytoscape.cyndex2.internal.ui.swing.SignInDialog;
 import org.cytoscape.cyndex2.internal.util.IconUtil;
 import org.cytoscape.cyndex2.internal.util.Server;
@@ -32,22 +34,19 @@ import org.cytoscape.work.swing.DialogTaskManager;
 public class MainToolBarAction extends AbstractCyAction {
 
 	private static final String TITLE = "Open or Save Networks in NDEx...";
-	private static final String DESCRIPTION = "Open or Save Networks and Collections in NDEx, the Cloud Storage for the Cytoscape Cyberinfrastructure";
-	private final ImportNetworkFromNDExTaskFactory importTaskFactory;
-	private final ImportUserNetworkFromNDExTaskFactory importUserNetworkTaskFactory;
-	private final SaveNetworkToNDExTaskFactory saveTaskFactory;
+	private static final String DESCRIPTION = "Open or Save Networks in NDEx, the Cloud Storage for the Cytoscape Cyberinfrastructure";
+	private final OpenSessionOrNetworkFromNDExTaskFactoryImpl openFactory;
+	private final SaveSessionOrNetworkToNDExTaskFactoryImpl saveFactory;
 	private final CyServiceRegistrar serviceRegistrar;
 	
 	public MainToolBarAction(
-			ImportNetworkFromNDExTaskFactory importTaskFactory,
-			ImportUserNetworkFromNDExTaskFactory importUserNetworkTaskFactory,
-			SaveNetworkToNDExTaskFactory saveTaskFactory,
+			OpenSessionOrNetworkFromNDExTaskFactoryImpl openFactory,
+			SaveSessionOrNetworkToNDExTaskFactoryImpl saveFactory,
 			CyServiceRegistrar serviceRegistrar
 	) {
 		super(TITLE);
-		this.importTaskFactory = importTaskFactory;
-		this.importUserNetworkTaskFactory = importUserNetworkTaskFactory;
-		this.saveTaskFactory = saveTaskFactory;
+		this.openFactory = openFactory;
+		this.saveFactory = saveFactory;
 		this.serviceRegistrar = serviceRegistrar;
 		
 		inToolBar = true;
@@ -68,7 +67,7 @@ public class MainToolBarAction extends AbstractCyAction {
 	
 	@Override
 	public boolean isEnabled() {
-		return importTaskFactory.isReady() || saveTaskFactory.isReady();
+		return openFactory.isReady() || saveFactory.isReady();
 	}
 	
 	private JMenuItem getSignInMenuItem(final Font font, final int iconSize) {
@@ -86,7 +85,7 @@ public class MainToolBarAction extends AbstractCyAction {
 				
 				final Server selectedServer = ServerManager.INSTANCE.getServer();
 				if (selectedServer.getUsername() != null && !selectedServer.getUsername().isEmpty()) {
-					taskManager.execute(importUserNetworkTaskFactory.createTaskIterator());
+					taskManager.execute(openFactory.createTaskIterator());
 				}
 				signInDialog.dispose();
 			}
@@ -102,7 +101,7 @@ public class MainToolBarAction extends AbstractCyAction {
 				ServerManager.INSTANCE.getSelectedServer().getUsername() + ")", icon) {
 			@Override
 			public void actionPerformed(ActionEvent e) {	
-				taskManager.execute(importUserNetworkTaskFactory.createTaskIterator());
+				taskManager.execute(openFactory.createTaskIterator());
 			}
 		});
 		
@@ -121,21 +120,21 @@ public class MainToolBarAction extends AbstractCyAction {
 				( ServerManager.INSTANCE.getSelectedServer().getUsername() == null ? getSignInMenuItem(font, iconSize) : getMyNetworksMenuItem(font, iconSize));
 			popupMenu.add(mi);
 		}
-		
+
 		popupMenu.addSeparator();
-		
+
 		{
 			Icon icon = new TextIcon(IconUtil.LAYERED_OPEN_ICON, font, IconUtil.LAYERED_OPEN_SAVE_COLORS, iconSize, iconSize, 1);
 			JMenuItem mi = new JMenuItem(StringResources.NDEX_OPEN, icon);
-			mi.addActionListener(evt -> taskManager.execute(importTaskFactory.createTaskIterator()));
-			mi.setEnabled(importTaskFactory.isReady());
+			mi.addActionListener(evt -> taskManager.execute(openFactory.createTaskIterator()));
+			mi.setEnabled(openFactory.isReady());
 			popupMenu.add(mi);
 		}
 		{
 			Icon icon = new TextIcon(IconUtil.LAYERED_SAVE_ICON, font, IconUtil.LAYERED_OPEN_SAVE_COLORS, iconSize, iconSize, 1);
 			JMenuItem mi = new JMenuItem(StringResources.NDEX_SAVE, icon);
-			mi.addActionListener(evt -> taskManager.execute(saveTaskFactory.createTaskIterator()));
-			mi.setEnabled(saveTaskFactory.isReady());
+			mi.addActionListener(evt -> taskManager.execute(saveFactory.createTaskIterator()));
+			mi.setEnabled(saveFactory.isReady());
 			popupMenu.add(mi);
 		}
 		

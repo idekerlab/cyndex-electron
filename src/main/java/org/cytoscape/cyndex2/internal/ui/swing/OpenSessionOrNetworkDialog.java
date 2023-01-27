@@ -307,7 +307,7 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 					_mainOpenButton.setEnabled(false);
 					_selectedNDExNetworkIndex = -1;
 				} else {
-					LOGGER.debug(event.toString() + " " + _myNetworksTable.getValueAt(_myNetworksTable.getSelectedRow(), 0).toString());
+					LOGGER.debug(event.toString());
 					_mainOpenButton.setEnabled(true);
 					_selectedNDExNetworkIndex = _myNetworksTable.convertRowIndexToModel(_myNetworksTable.getSelectedRow());
 				}

@@ -20,6 +20,7 @@ import org.cytoscape.model.CyNetwork;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
+import org.cytoscape.task.NetworkCollectionTaskFactory;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * #L%
  */
 
-public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
+public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory implements NetworkCollectionTaskFactory {
 	private final static Logger LOGGER = LoggerFactory.getLogger(SaveSessionOrNetworkToNDExTaskFactoryImpl.class);
 	private final CyServiceRegistrar serviceRegistrar;
 	private static final long DIALOG_DISPLAY_DURATION = 5000l;
@@ -80,7 +81,12 @@ public class SaveSessionOrNetworkToNDExTaskFactoryImpl extends AbstractTaskFacto
 	 */
 	@Override
 	public boolean isReady() {
-		return true;
+		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
+		CyNetwork currentNetwork = appManager.getCurrentNetwork();
+		if (currentNetwork != null){
+			return true;
+		}
+		return false;
 	}
 	
 	/**

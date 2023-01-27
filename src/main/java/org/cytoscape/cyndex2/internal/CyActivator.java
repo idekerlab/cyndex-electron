@@ -291,6 +291,8 @@ public class CyActivator extends AbstractCyActivator {
 		//BrowserManager.setDataDirectory(new File(jxBrowserDir, "data"));
 		
 		// TF for NDEx Save Network
+		/**
+		 * 1/9/23 Rudi requested this menu option be removed
 		final OpenSaveTaskFactory ndexSaveNetworkTaskFactory = new OpenSaveTaskFactory(appManager);
 		final Properties ndexSaveNetworkTaskFactoryProps = new Properties();
 
@@ -298,6 +300,7 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.0");
 		ndexSaveNetworkTaskFactoryProps.setProperty(TITLE, "Network to NDEx...");
 		registerService(bc, ndexSaveNetworkTaskFactory, TaskFactory.class, ndexSaveNetworkTaskFactoryProps);
+		*/
 		ShowDialogUtil dialogUtil = new ShowDialogUtil();
 		OpenSessionOrNetworkDialog openDialog = new OpenSessionOrNetworkDialog(CyActivator.numberOfNDExNetworksToList());
 		
@@ -352,6 +355,8 @@ public class CyActivator extends AbstractCyActivator {
 		
 		
 		// TF for NDEx Save Collection
+		/**
+		 * 1/9/23 Rudi requested this menu option be removed
 		final OpenSaveCollectionTaskFactory ndexSaveCollectionTaskFactory = new OpenSaveCollectionTaskFactory(appManager);
 		final Properties ndexSaveCollectionTaskFactoryProps = new Properties();
 
@@ -364,12 +369,14 @@ public class CyActivator extends AbstractCyActivator {
 		ImportUserNetworkFromNDExTaskFactory importUserNetworkTaskFactory = new ImportUserNetworkFromNDExTaskFactory(ExternalAppManager.APP_NAME_LOAD);
 		
 		SaveNetworkToNDExTaskFactory saveToNDExTaskFactory = new SaveNetworkToNDExTaskFactory(appManager, ExternalAppManager.APP_NAME_SAVE);
-
+		*/
 		
-		MainToolBarAction action = new MainToolBarAction(importFromNDExTaskFactory, importUserNetworkTaskFactory, saveToNDExTaskFactory, serviceRegistrar);
+		MainToolBarAction action = new MainToolBarAction(openSessionOrNetworkFac, saveSessionOrNetworkFac, serviceRegistrar);
 		registerService(bc, action, CyAction.class);
 		
 		// TF for NDEx Load
+		/**
+		 * 1/9/23 Rudi requested this menu option be removed
 		Icon icon = IconUtil.getNdexIcon();
 		
 		final OpenBrowseTaskFactory ndexTaskFactory = new OpenBrowseTaskFactory(icon);
@@ -379,7 +386,8 @@ public class CyActivator extends AbstractCyActivator {
 		ndexTaskFactoryProps.setProperty(MENU_GRAVITY, "0.0");
 		ndexTaskFactoryProps.setProperty(TITLE, "Network from NDEx...");
 		registerAllServices(bc, ndexTaskFactory, ndexTaskFactoryProps);
-
+		*/
+		
 		// Expose CyREST endpoints
 		final ErrorBuilder errorBuilder = new ErrorBuilder(ciServiceManager, config);
 		final NdexClient ndexClient = new NdexClient(errorBuilder);
@@ -398,17 +406,19 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, new NdexNetworkResourceImpl(ndexClient, appManager, netmgr, ciServiceManager),
 				NdexNetworkResource.class, new Properties());
 
-		OpenSaveTaskFactory saveNetworkToNDExContextMenuTaskFactory = new OpenSaveTaskFactory(appManager);
+		//OpenSaveTaskFactory saveNetworkToNDExContextMenuTaskFactory = new OpenSaveTaskFactory(appManager);
 		Properties saveNetworkToNDExContextMenuProps = new Properties();
-		saveNetworkToNDExContextMenuProps.setProperty(ID, "exportToNDEx");
+		saveNetworkToNDExContextMenuProps.setProperty(ID, "saveToNDEx");
 		saveNetworkToNDExContextMenuProps.setProperty(TITLE, StringResources.NDEX_SAVE.concat("..."));
 		saveNetworkToNDExContextMenuProps.setProperty(IN_NETWORK_PANEL_CONTEXT_MENU, "true");
 		saveNetworkToNDExContextMenuProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
 		saveNetworkToNDExContextMenuProps.setProperty(ENABLE_FOR, "network");
 
-		registerService(bc, saveNetworkToNDExContextMenuTaskFactory, NetworkCollectionTaskFactory.class,
-				saveNetworkToNDExContextMenuProps);
+		registerService(bc, saveSessionOrNetworkFac, TaskFactory.class,
+		 		saveNetworkToNDExContextMenuProps);
 		
+		/**
+		 * 1/9/23 Rudi requested this menu option be removed
 		OpenSaveCollectionTaskFactory saveCollectionToNDExContextMenuTaskFactory = new OpenSaveCollectionTaskFactory(appManager);
 		Properties saveCollectionToNDExContextMenuProps = new Properties();
 		saveNetworkToNDExContextMenuProps.setProperty(ID, "saveCollectionToNDEx");
@@ -417,7 +427,7 @@ public class CyActivator extends AbstractCyActivator {
 		saveCollectionToNDExContextMenuProps.setProperty(MENU_GRAVITY, "1.0");
 		registerService(bc, saveCollectionToNDExContextMenuTaskFactory, RootNetworkCollectionTaskFactory.class,
 				saveCollectionToNDExContextMenuProps);
-		
+		*/
 		if (menusRenamed){
 			/**
 			ShowDialogUtil dialogUtil = new ShowDialogUtil();
