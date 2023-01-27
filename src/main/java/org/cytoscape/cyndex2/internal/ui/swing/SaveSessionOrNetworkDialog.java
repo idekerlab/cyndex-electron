@@ -378,7 +378,7 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		_ndexPanel.add(getNDExSignInPanel(), BorderLayout.PAGE_START);
 	
 		_ndexTabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		_ndexTabbedPane.setPreferredSize(new Dimension(600, 330));
+		_ndexTabbedPane.setPreferredSize(new Dimension(600, 320));
 		
 		JPanel saveAsPanel = new JPanel();
 		JLabel saveAsLabel = new JLabel("<html><font color=\"#000000\">Save As:</font></html>");
@@ -410,10 +410,11 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		saveAsPanel.add(_ndexSaveAsTextField, BorderLayout.LINE_END);
 		//_ndexPanel.add(saveAsPanel, BorderLayout.PAGE_START);
 		JScrollPane scrollPane = new JScrollPane(getMyNetworksJTable());
-		scrollPane.setPreferredSize(new Dimension(570,245));
+		scrollPane.setPreferredSize(new Dimension(570,225));
 		//_ndexPanel.add(scrollPane, BorderLayout.PAGE_START);
 		saveAsPanel.add(scrollPane, BorderLayout.PAGE_END);
 		_ndexTabbedPane.add("My Networks", saveAsPanel);
+		_ndexPanel.add(new JLabel("Disclaimer: Equations in tables are not preserved when saved to NDEx"), BorderLayout.PAGE_START);
 		_ndexPanel.add(_ndexTabbedPane, BorderLayout.PAGE_START);
 	}
 }
