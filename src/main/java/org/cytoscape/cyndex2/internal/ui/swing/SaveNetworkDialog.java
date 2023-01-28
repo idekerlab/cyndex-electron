@@ -3,7 +3,6 @@ package org.cytoscape.cyndex2.internal.ui.swing;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,6 +12,7 @@ import java.io.File;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -60,8 +60,8 @@ import org.slf4j.LoggerFactory;
  * #L%
  */
 @SuppressWarnings("serial")
-public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
-	private final static Logger LOGGER = LoggerFactory.getLogger(SaveSessionOrNetworkDialog.class);
+public class SaveNetworkDialog extends BaseOpenSaveDialog {
+	private final static Logger LOGGER = LoggerFactory.getLogger(SaveNetworkDialog.class);
 	public final static String SAVE_SESSION = "SaveSession";
 	public final static String SAVE_NDEX = "SaveNDEx";
 	private boolean _guiLoaded;
@@ -86,7 +86,7 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	private NetworkSummary _ndexNetworkToOverwrite;
 	private boolean _enabledNDExSave;
 	
-	public SaveSessionOrNetworkDialog(ShowDialogUtil dialogUtil){
+	public SaveNetworkDialog(ShowDialogUtil dialogUtil){
 		super();
 		_guiLoaded = false;
 		_dialogUtil = dialogUtil;
@@ -126,7 +126,7 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	 * Initializes gui once, subsequent calls do nothing
 	 * @return 
 	 */
-	public boolean createGUI(){
+	public boolean createGUI(UUID savedUUID){
 		if (_guiLoaded == false){
 			_mainSaveButton = new JButton("Save");
 			_mainCancelButton = new JButton("Cancel");
@@ -137,21 +137,33 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         JOptionPane pane = getOptionPane((JComponent)e.getSource());
-						if (_selectedCard.equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
-							List<NetworkSummary> matchingNetworks = SaveSessionOrNetworkDialog.this._myNetworksTableModel.getNetworksMatchingName(_ndexSaveAsTextField.getText());
-
-							if (matchingNetworks != null && matchingNetworks.size() > 0){
-								
-									LOGGER.debug("User wishes to save, but " + Integer.toString(matchingNetworks.size())
-											+ " networks match the name. Asking user to change name or select a network to overwrite");
-									_dialogUtil.showMessageDialog(SaveSessionOrNetworkDialog.this, Integer.toString(matchingNetworks.size()) 
-											+ " networks match that name.\nPlease click ok and choose a different name");
+						if (_selectedCard.equals(SaveNetworkDialog.SAVE_NDEX)){
+							List<NetworkSummary> matchingNetworks = SaveNetworkDialog.this._myNetworksTableModel.getNetworksMatchingName(_ndexSaveAsTextField.getText());
+							
+							// if no network matches, we are good to save
+							if (matchingNetworks == null || matchingNetworks.isEmpty()){
+								pane.setValue(_mainSaveButton);
 								return;
 							}
+							// This covers the case where a user loaded a network from NDEx
+							// and hit save as dialog and selected the same network (matching savedUUID)
+							// in the dialog
+							if (savedUUID != null && SaveNetworkDialog.this.getNDExSelectedNetwork() != null){
+								if (SaveNetworkDialog.this.getNDExSelectedNetwork().getExternalId() != null &&
+										savedUUID.compareTo(SaveNetworkDialog.this.getNDExSelectedNetwork().getExternalId()) == 0) {
+									LOGGER.debug("The network selected to save matches the internal NDEx UUID of the network. Allowing save");
+									_ndexNetworkToOverwrite = SaveNetworkDialog.this.getNDExSelectedNetwork();
+									pane.setValue(_mainSaveButton);
+									return;
+								}
+							}
+							// all other cases we want the user to choose a different name
+							LOGGER.debug("User wishes to save, but " + Integer.toString(matchingNetworks.size())
+									+ " networks match the name. Asking user to change name");
+							_dialogUtil.showMessageDialog(SaveNetworkDialog.this, Integer.toString(matchingNetworks.size()) 
+									+ " networks match that name.\nPlease click ok and choose a different name");
 						}
-						
-                        pane.setValue(_mainSaveButton);
-                    }
+	                }
                 });
 			_mainSaveButton.setEnabled(false);
 			
@@ -162,8 +174,6 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
                         pane.setValue(_mainCancelButton);
                     }
                 });
-			// TODO: Need to remember previous behavior via preferences
-			//_saveSessionButton.setEnabled(false);
 
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
@@ -194,20 +204,15 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	}
 	
 	/**
-	 * If the selected card is open session return path to selected file or 
-	 * null if no file is selected
-	 * @return 
+	 * Gets the NDEx selected network
+	 * @return selected network or null if no selection
 	 */
-	public File getSelectedSessionFile(){
-		return null;
-	}
-	
 	public NetworkSummary getNDExSelectedNetwork(){
 		if (getSelectedCard() == null){
 			return null;
 		}
 		
-		if (getSelectedCard().equals(SaveSessionOrNetworkDialog.SAVE_NDEX)){
+		if (getSelectedCard().equals(SaveNetworkDialog.SAVE_NDEX)){
 			if (_selectedNDExNetworkIndex != -1 && _selectedNDExNetworkIndex < _myNetworksTableModel.getRowCount()){
 				return _myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
 			}
@@ -215,6 +220,10 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		return null;
 	}
 	
+	/**
+	 * Gets user desired network name from save as text field
+	 * @return null if text field itself is null otherwise the value of the text field
+	 */
 	public String getDesiredNetworkName(){
 		if (_ndexSaveAsTextField == null){
 			return null;
@@ -222,13 +231,16 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		return _ndexSaveAsTextField.getText();
 	}
 	
+	/**
+	 * Sets the desired network name and updates the my networks table
+	 * @param desiredName 
+	 */
 	public void setDesiredNetworkName(final String desiredName){
 		if (_ndexSaveAsTextField != null){
 			_ndexSaveAsTextField.setText(desiredName);
 			
 			//should probably also refresh the network list at this time
 			updateMyNetworksTable();
-			
 		}
 	}
 	
@@ -253,10 +265,10 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 			@Override
 			public void actionPerformed(ActionEvent e){
 				CardLayout cl = (CardLayout)_cards.getLayout();
-				cl.show(_cards, SaveSessionOrNetworkDialog.SAVE_NDEX);
+				cl.show(_cards, SaveNetworkDialog.SAVE_NDEX);
 				_saveNDExButton.setBackground(_NDExButtonBlue);
 				setButtonFocus(true, _saveNDExButton);
-				_selectedCard = SaveSessionOrNetworkDialog.SAVE_NDEX;
+				_selectedCard = SaveNetworkDialog.SAVE_NDEX;
 				_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 			}
 		});
@@ -276,11 +288,11 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
         _cards.setPreferredSize(this._rightPanelDimension);
 		
 		CardLayout cl = (CardLayout)_cards.getLayout();
-		_selectedCard = SaveSessionOrNetworkDialog.SAVE_NDEX;
+		_selectedCard = SaveNetworkDialog.SAVE_NDEX;
 		
 		createNDExPanel();
-		_cards.add(_ndexPanel, SaveSessionOrNetworkDialog.SAVE_NDEX);
-		cl.addLayoutComponent(_ndexPanel, SaveSessionOrNetworkDialog.SAVE_NDEX);
+		_cards.add(_ndexPanel, SaveNetworkDialog.SAVE_NDEX);
+		cl.addLayoutComponent(_ndexPanel, SaveNetworkDialog.SAVE_NDEX);
 		
 		return _cards;
 	}
@@ -291,7 +303,6 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		JTable myNetworksTable = new JTable(_myNetworksTableModel);
 		
 		_myNetworksTableSorter = new TableRowSorter<MyNetworksTableModel>(_myNetworksTableModel);
-		//myNetworksTable.setAutoCreateRowSorter(true);
 		myNetworksTable.setRowSorter(_myNetworksTableSorter);
 		myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 150));
         myNetworksTable.setFillsViewportHeight(true);
@@ -299,19 +310,14 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		myNetworksTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
 		myNetworksTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
         public void valueChanged(ListSelectionEvent event) {
-				// do some actions here, for example
-				// print first column value from selected row
+			
 				
 				if (myNetworksTable.getSelectedRow() == -1){
 					LOGGER.debug("Nothing selected");
-					//_mainSaveButton.setEnabled(false);
 					_selectedNDExNetworkIndex = -1;
-					//_ndexSaveAsTextField.setText("");
 				} else {
 					LOGGER.debug(event.toString() + " " + myNetworksTable.getValueAt(myNetworksTable.getSelectedRow(), 0).toString());
 					_selectedNDExNetworkIndex = myNetworksTable.convertRowIndexToModel(myNetworksTable.getSelectedRow());
-					//_ndexSaveAsTextField.setText(_myNetSummaryTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex).getName());
-					//_mainSaveButton.setEnabled(true);
 				}
 			}
         });
@@ -336,6 +342,12 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		return myNetworksTable;
 	}
 	
+	/**
+	 * Creates a row filter that keeps the rows whose network 
+	 * names contain the text in <b>saveAsText</b> 
+	 * @param saveAsText
+	 * @return 
+	 */
 	private RowFilter<MyNetworksTableModel, Object> getStringMatchRowFilter(final String saveAsText){
 		return new RowFilter<MyNetworksTableModel, Object>(){
 			@Override
@@ -378,7 +390,7 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		_ndexPanel.add(getNDExSignInPanel(), BorderLayout.PAGE_START);
 	
 		_ndexTabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		_ndexTabbedPane.setPreferredSize(new Dimension(600, 320));
+		_ndexTabbedPane.setPreferredSize(new Dimension(600, 315));
 		
 		JPanel saveAsPanel = new JPanel();
 		JLabel saveAsLabel = new JLabel("<html><font color=\"#000000\">Save As:</font></html>");
@@ -389,9 +401,6 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		_ndexSaveAsTextField.getDocument().addDocumentListener(new DocumentListener(){
 				@Override
 				public void insertUpdate(DocumentEvent e){
-					// @TODO need to figure out how to filter
-					// the results by value in save as text field without
-					// causing concurrent modification exceptions
 					newMyNetworksTableSorterFilter();
 					_mainSaveButton.setEnabled(_ndexSaveAsTextField.getText().length() > 0);
 				}
@@ -408,13 +417,12 @@ public class SaveSessionOrNetworkDialog extends BaseOpenSaveDialog {
 				}
 			});
 		saveAsPanel.add(_ndexSaveAsTextField, BorderLayout.LINE_END);
-		//_ndexPanel.add(saveAsPanel, BorderLayout.PAGE_START);
 		JScrollPane scrollPane = new JScrollPane(getMyNetworksJTable());
 		scrollPane.setPreferredSize(new Dimension(570,225));
-		//_ndexPanel.add(scrollPane, BorderLayout.PAGE_START);
 		saveAsPanel.add(scrollPane, BorderLayout.PAGE_END);
 		_ndexTabbedPane.add("My Networks", saveAsPanel);
-		_ndexPanel.add(new JLabel("Disclaimer: Equations in tables are not preserved when saved to NDEx"), BorderLayout.PAGE_START);
 		_ndexPanel.add(_ndexTabbedPane, BorderLayout.PAGE_START);
+		_ndexPanel.add(new JLabel("<html>Disclaimer: Equations, Images, and App created tables are <b>NOT</b> preserved when saved to NDEx"), BorderLayout.PAGE_END);
+		
 	}
 }

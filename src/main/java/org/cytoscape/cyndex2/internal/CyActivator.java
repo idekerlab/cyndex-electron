@@ -32,13 +32,13 @@ import org.cytoscape.cyndex2.internal.rest.errors.ErrorBuilder;
 import org.cytoscape.cyndex2.internal.task.OpenBrowseTaskFactory;
 import org.cytoscape.cyndex2.internal.task.OpenSaveCollectionTaskFactory;
 import org.cytoscape.cyndex2.internal.task.OpenSaveTaskFactory;
-import org.cytoscape.cyndex2.internal.task.OpenSessionOrNetworkFromNDExTaskFactoryImpl;
-import org.cytoscape.cyndex2.internal.task.SaveSessionOrNetworkToNDExTaskFactoryImpl;
+import org.cytoscape.cyndex2.internal.task.OpenNetworkFromNDExTaskFactoryImpl;
+import org.cytoscape.cyndex2.internal.task.SaveNetworkToNDExTaskFactoryImpl;
 import org.cytoscape.cyndex2.internal.ui.ImportUserNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.ImportNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.MainToolBarAction;
 import org.cytoscape.cyndex2.internal.ui.SaveNetworkToNDExTaskFactory;
-import org.cytoscape.cyndex2.internal.ui.swing.OpenSessionOrNetworkDialog;
+import org.cytoscape.cyndex2.internal.ui.swing.OpenNetworkDialog;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.cyndex2.internal.util.CIServiceManager;
 import org.cytoscape.cyndex2.internal.util.ExternalAppManager;
@@ -299,9 +299,9 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveNetworkTaskFactoryProps.setProperty(TITLE, "Network to NDEx...");
 		registerService(bc, ndexSaveNetworkTaskFactory, TaskFactory.class, ndexSaveNetworkTaskFactoryProps);
 		ShowDialogUtil dialogUtil = new ShowDialogUtil();
-		OpenSessionOrNetworkDialog openDialog = new OpenSessionOrNetworkDialog(CyActivator.numberOfNDExNetworksToList());
+		OpenNetworkDialog openDialog = new OpenNetworkDialog(CyActivator.numberOfNDExNetworksToList());
 		
-		final OpenSessionOrNetworkFromNDExTaskFactoryImpl openSessionOrNetworkFac = new OpenSessionOrNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
+		final OpenNetworkFromNDExTaskFactoryImpl openSessionOrNetworkFac = new OpenNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
 		final Properties ndexOpenNetworkTaskFactoryProps = new Properties();
 		ndexOpenNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
 		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP, "Open Network from NDEx");
@@ -320,7 +320,7 @@ public class CyActivator extends AbstractCyActivator {
 		
 		long progressDisplayDuration = CyActivator.progressDisplayDuration();
 		
-		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFac = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar, progressDisplayDuration);
+		final SaveNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFac = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, progressDisplayDuration);
 		final Properties ndexSaveSessionOrNetworkTaskFactoryProps = new Properties();
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ID, "saveSessionOrNetworkToCloudTaskFactory");
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
@@ -335,7 +335,7 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
 		registerService(bc, saveSessionOrNetworkFac, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryProps);
 		
-		final SaveSessionOrNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFacAlwaysPrompt = new SaveSessionOrNetworkToNDExTaskFactoryImpl(serviceRegistrar, true, progressDisplayDuration);
+		final SaveNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFacAlwaysPrompt = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, true, progressDisplayDuration);
 		final Properties ndexSaveSessionOrNetworkTaskFactoryPropsPrompt = new Properties();
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(ID, "saveSessionOrNetworkToCloudAlwaysPromptTaskFactory");
 		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(PREFERRED_MENU, "File");

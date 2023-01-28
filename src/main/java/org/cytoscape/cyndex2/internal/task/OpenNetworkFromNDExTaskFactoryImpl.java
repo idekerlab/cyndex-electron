@@ -3,7 +3,7 @@ package org.cytoscape.cyndex2.internal.task;
 import java.io.File;
 import javax.swing.JOptionPane;
 import org.cytoscape.application.swing.CySwingApplication;
-import org.cytoscape.cyndex2.internal.ui.swing.OpenSessionOrNetworkDialog;
+import org.cytoscape.cyndex2.internal.ui.swing.OpenNetworkDialog;
 import org.cytoscape.cyndex2.internal.util.ServerManager;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
@@ -39,16 +39,16 @@ import org.slf4j.LoggerFactory;
  * #L%
  */
 
-public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFactory {
-	private final static Logger LOGGER = LoggerFactory.getLogger(OpenSessionOrNetworkFromNDExTaskFactoryImpl.class);
+public class OpenNetworkFromNDExTaskFactoryImpl extends AbstractTaskFactory {
+	private final static Logger LOGGER = LoggerFactory.getLogger(OpenNetworkFromNDExTaskFactoryImpl.class);
 	
 	private final CyServiceRegistrar serviceRegistrar;
 
-	private OpenSessionOrNetworkDialog _dialog;
+	private OpenNetworkDialog _dialog;
 	private ShowDialogUtil _dialogUtil;
 	
-	public OpenSessionOrNetworkFromNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar,
-			OpenSessionOrNetworkDialog dialog,
+	public OpenNetworkFromNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar,
+			OpenNetworkDialog dialog,
 			ShowDialogUtil dialogUtil) {
 		this.serviceRegistrar = serviceRegistrar;
 		_dialog = dialog;
@@ -78,7 +78,7 @@ public class OpenSessionOrNetworkFromNDExTaskFactoryImpl extends AbstractTaskFac
                            options[0]);
 		// if res is 0 then the user wants to open the network
         if (res == 0){			
-			if (_dialog.getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
+			if (_dialog.getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
 				NetworkSummary netSummary = _dialog.getNDExSelectedNetwork();
 				if (netSummary != null){
 					try{

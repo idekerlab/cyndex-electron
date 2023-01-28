@@ -64,8 +64,8 @@ import org.slf4j.LoggerFactory;
  * #L%
  */
 @SuppressWarnings("serial")
-public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
-	private final static Logger LOGGER = LoggerFactory.getLogger(OpenSessionOrNetworkDialog.class);
+public class OpenNetworkDialog extends BaseOpenSaveDialog {
+	private final static Logger LOGGER = LoggerFactory.getLogger(OpenNetworkDialog.class);
 	public final static String OPEN_NDEX = "OpenNDEx";
 	public final static String SIGN_IN = "Sign in";
 	public final static String SIGN_OUT = "Sign out";
@@ -104,11 +104,11 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 	 */
 	private boolean _ndexNeverDisplayed = true;
 	
-	public OpenSessionOrNetworkDialog(){
+	public OpenNetworkDialog(){
 		this(400);
 	}
 	
-	public OpenSessionOrNetworkDialog(int networkTableLimit){
+	public OpenNetworkDialog(int networkTableLimit){
 		super(networkTableLimit);
 		_guiLoaded = false;
 	}
@@ -206,7 +206,7 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		if (getSelectedCard() == null){
 			return null;
 		}
-		if (getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
+		if (getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
 			if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
 				return _myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
 			}
@@ -240,9 +240,9 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 			@Override
 			public void actionPerformed(ActionEvent e){
 				CardLayout cl = (CardLayout)_cards.getLayout();
-				cl.show(_cards, OpenSessionOrNetworkDialog.OPEN_NDEX);
+				cl.show(_cards, OpenNetworkDialog.OPEN_NDEX);
 				_openNDExButton.setBackground(_NDExButtonBlue);
-				_selectedCard = OpenSessionOrNetworkDialog.OPEN_NDEX;
+				_selectedCard = OpenNetworkDialog.OPEN_NDEX;
 				setButtonFocus(true, _openNDExButton);
 				// need to figure out if this should be enabled or not
 				_mainOpenButton.setEnabled(false);
@@ -278,11 +278,11 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
         _cards.setPreferredSize(this._rightPanelDimension);
 		
 		CardLayout cl = (CardLayout)_cards.getLayout();
-		_selectedCard = OpenSessionOrNetworkDialog.OPEN_NDEX;
+		_selectedCard = OpenNetworkDialog.OPEN_NDEX;
 		
 		createNDExPanel();
-		_cards.add(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
-		cl.addLayoutComponent(_ndexPanel, OpenSessionOrNetworkDialog.OPEN_NDEX);
+		_cards.add(_ndexPanel, OpenNetworkDialog.OPEN_NDEX);
+		cl.addLayoutComponent(_ndexPanel, OpenNetworkDialog.OPEN_NDEX);
 		return _cards;
 	}
 	
@@ -360,7 +360,7 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 		myNetSearchPanel.add(_ndexMyNetworksSearchField, BorderLayout.LINE_START);
 				
 		myNetPanel.add(myNetSearchPanel, BorderLayout.PAGE_START);
-		myNetPanel.setName(OpenSessionOrNetworkDialog.MY_NETWORKS_TABBED_PANE);
+		myNetPanel.setName(OpenNetworkDialog.MY_NETWORKS_TABBED_PANE);
 		JScrollPane scrollPane = new JScrollPane(_myNetworksTable);
 		scrollPane.setPreferredSize(new Dimension(570,250));
 		myNetPanel.add(scrollPane, BorderLayout.PAGE_END);
@@ -481,7 +481,7 @@ public class OpenSessionOrNetworkDialog extends BaseOpenSaveDialog {
 			public void stateChanged(ChangeEvent e) {
 				LOGGER.debug("Tab: " + _ndexTabbedPane.getSelectedIndex());
 				_mainOpenButton.setEnabled(false);
-				if (getSelectedCard().equals(OpenSessionOrNetworkDialog.OPEN_NDEX)){
+				if (getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
 					if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
 						_mainOpenButton.setEnabled(true);
 					}
