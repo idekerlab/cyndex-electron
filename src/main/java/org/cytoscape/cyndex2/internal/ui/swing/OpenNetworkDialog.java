@@ -179,40 +179,21 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 
 		return true;
 	}
-	
-	/**
-	 * Returns name of selected card on right side of dialog
-	 * @return 
-	 */
-	public String getSelectedCard(){
-		return _selectedCard;
-	}
-	
-	/**
-	 * If the selected card is open session return path to selected file or 
-	 * null if no file is selected
-	 * @return 
-	 */
-	public File getSelectedSessionFile(){
-		return null;
-	}
-	
+
 	/**
 	 * Gets the NDEx selected network if the open NDEx button/tab is selected and
 	 * the user has selected a network
 	 * @return selected network or {@code null}
 	 */
 	public NetworkSummary getNDExSelectedNetwork(){
-		if (getSelectedCard() == null){
+		if (_guiLoaded == false){
 			return null;
 		}
-		if (getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
-			if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
-				return _myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
-			}
-			if (_ndexTabbedPane.getSelectedIndex() == 1 && _selectedNDExSearchNetworkIndex != -1){
-				return _searchTableModel.getNetworkSummaries().get(_selectedNDExSearchNetworkIndex);
-			}
+		if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
+			return _myNetworksTableModel.getNetworkSummaries().get(_selectedNDExNetworkIndex);
+		}
+		if (_ndexTabbedPane.getSelectedIndex() == 1 && _selectedNDExSearchNetworkIndex != -1){
+			return _searchTableModel.getNetworkSummaries().get(_selectedNDExSearchNetworkIndex);
 		}
 		return null;
 	}
@@ -481,13 +462,11 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 			public void stateChanged(ChangeEvent e) {
 				LOGGER.debug("Tab: " + _ndexTabbedPane.getSelectedIndex());
 				_mainOpenButton.setEnabled(false);
-				if (getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
-					if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
-						_mainOpenButton.setEnabled(true);
-					}
-					if (_ndexTabbedPane.getSelectedIndex() == 1 && _selectedNDExSearchNetworkIndex != -1){
-						_mainOpenButton.setEnabled(true);
-					}
+				if (_ndexTabbedPane.getSelectedIndex() == 0 && _selectedNDExNetworkIndex != -1){
+					_mainOpenButton.setEnabled(true);
+				}
+				if (_ndexTabbedPane.getSelectedIndex() == 1 && _selectedNDExSearchNetworkIndex != -1){
+					_mainOpenButton.setEnabled(true);
 				}
 			}
 		});

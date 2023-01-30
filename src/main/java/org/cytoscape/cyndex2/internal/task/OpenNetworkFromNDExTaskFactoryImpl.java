@@ -64,6 +64,7 @@ public class OpenNetworkFromNDExTaskFactoryImpl extends AbstractTaskFactory {
 	public synchronized TaskIterator createTaskIterator() {
 		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);		
 		if (_dialog.createGUI() == false){
+			LOGGER.warn("Unable to create GUI for open network from NDEx");
 			return new TaskIterator(1, new CanceledTask());
 		}
 		
@@ -78,18 +79,19 @@ public class OpenNetworkFromNDExTaskFactoryImpl extends AbstractTaskFactory {
                            options[0]);
 		// if res is 0 then the user wants to open the network
         if (res == 0){			
-			if (_dialog.getSelectedCard().equals(OpenNetworkDialog.OPEN_NDEX)){
-				NetworkSummary netSummary = _dialog.getNDExSelectedNetwork();
-				if (netSummary != null){
-					try{
-						NdexRestClientModelAccessLayer client = ServerManager.INSTANCE.getServer().getModelAccessLayer();
-						return new TaskIterator(1, new NetworkImportTask(client,
-								netSummary.getExternalId(), null, true));
-					} catch(Exception e){
-						LOGGER.error("Error importing network from NDEx", e);
-						_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Error importing network from NDEx: " + e.getMessage());
-					}
+			NetworkSummary netSummary = _dialog.getNDExSelectedNetwork();
+			if (netSummary != null){
+				try{
+					NdexRestClientModelAccessLayer client = ServerManager.INSTANCE.getServer().getModelAccessLayer();
+					return new TaskIterator(1, new NetworkImportTask(client,
+							netSummary.getExternalId(), null, true));
+				} catch(Exception e){
+					LOGGER.error("Error importing network from NDEx", e);
+					_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Error importing network from NDEx: " + e.getMessage());
 				}
+			} else {
+				LOGGER.warn("User selected open in open network dialog, "
+						+ "but no network is selected. Going to just not do anything.");
 			}
         }
 		return new TaskIterator(1, new CanceledTask());

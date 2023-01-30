@@ -13,13 +13,7 @@ import org.junit.Test;
  *
  * @author churas
  */
-public class OpenSessionOrNeworkDialogTests {
-	
-	@Test
-	public void testGetSelectedSessionFileBeforeCreateGUI(){
-		OpenNetworkDialog dialog = new OpenNetworkDialog();
-		assertNull(dialog.getSelectedSessionFile());
-	}
+public class OpenNeworkDialogTests {
 	
 	@Test
 	public void testGetNDExSelectedNetworkBeforeCreateGUI(){
@@ -34,8 +28,6 @@ public class OpenSessionOrNeworkDialogTests {
 		OpenNetworkDialog dialog = new OpenNetworkDialog();
 		try {
 			assertTrue(dialog.createGUI());
-			assertEquals(OpenNetworkDialog.OPEN_NDEX, dialog.getSelectedCard());
-			assertNull(dialog.getSelectedSessionFile());
 			assertNull(dialog.getNDExSelectedNetwork());
 		} catch(Exception ex){
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
