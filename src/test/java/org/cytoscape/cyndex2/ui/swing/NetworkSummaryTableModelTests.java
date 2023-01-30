@@ -146,4 +146,54 @@ public class NetworkSummaryTableModelTests {
 		}
 	}
 	
+	@Test
+	public void testGitColumnName(){
+		ArrayList<NetworkSummary> newList = new ArrayList<>();
+		
+		NetworkSummaryTableModel model = new NetworkSummaryTableModel(newList, null);
+		assertEquals("", model.getColumnName(0));
+		assertEquals("name", model.getColumnName(1));
+		assertEquals("owner", model.getColumnName(2));
+		assertEquals("visibility", model.getColumnName(3));
+		assertEquals("nodes", model.getColumnName(4));
+		assertEquals("edges", model.getColumnName(5));
+		assertEquals("modified", model.getColumnName(6));
+		try {
+			model.getColumnName(7);
+			fail("Expected IllegalArgumentException");
+		} catch(IllegalArgumentException iae){
+			assertTrue(iae.getMessage().contains("Column at index"));
+		}
+	}
+	
+	@Test
+	public void testGitColumnNameHideImportTrue(){
+		ArrayList<NetworkSummary> newList = new ArrayList<>();
+		
+		NetworkSummaryTableModel model = new NetworkSummaryTableModel(newList, null, true);
+		assertEquals("name", model.getColumnName(0));
+		assertEquals("owner", model.getColumnName(1));
+		assertEquals("visibility", model.getColumnName(2));
+		assertEquals("nodes", model.getColumnName(3));
+		assertEquals("edges", model.getColumnName(4));
+		assertEquals("modified", model.getColumnName(5));
+		try {
+			model.getColumnName(6);
+			fail("Expected IllegalArgumentException");
+		} catch(IllegalArgumentException iae){
+			assertTrue(iae.getMessage().contains("Column at index"));
+		}
+	}
+	
+	@Test
+	public void testIsCellEditable(){
+		NetworkSummaryTableModel model = new NetworkSummaryTableModel(new ArrayList<>(), null);
+		assertEquals(true, model.isCellEditable(0, 0));
+		assertEquals(false, model.isCellEditable(10, 1));
+		
+		model = new NetworkSummaryTableModel(new ArrayList<>(), null, true);
+		assertEquals(false, model.isCellEditable(0, 0));
+		assertEquals(false, model.isCellEditable(10, 1));
+		
+	}
 }
