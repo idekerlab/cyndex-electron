@@ -73,6 +73,11 @@ public class Server
         userId = s.getUserId();
     }
 
+	/**
+	 * Using {@code mal} passed in checks if NDEx server is running
+	 * @param mal client to connect to NDEx with
+	 * @return true if yes, false otherwise
+	 */
     public boolean isRunningNdexServer(NdexRestClientModelAccessLayer mal)
     {
     		try {
@@ -84,6 +89,12 @@ public class Server
 				}
     	}
     
+	/**
+	 * Very odd this seems to return true no matter what
+	 * @param mal - not used?
+	 * @return always returns true
+	 * @throws IOException never thrown, why is this here? 
+	 */
     public boolean check(NdexRestClientModelAccessLayer mal) throws IOException
     {
         boolean usernamePresent = username != null && !username.isEmpty();
