@@ -38,7 +38,7 @@ public class NDExFinalizeSaveTask extends AbstractTask {
 	/**
 	 * How often in milliseconds to update the progress bar
 	 */
-	private static final long UPDATE_INTERVAL = 200;
+	public static final long UPDATE_INTERVAL = 200;
 	
 	/**
 	 * 
@@ -74,10 +74,10 @@ public class NDExFinalizeSaveTask extends AbstractTask {
 			return;
 		}
 		
-		taskMonitor.setProgress(0.0);
+		taskMonitor.setProgress(0.0f);
 		taskMonitor.setStatusMessage("Saving network to NDEx");
 		float progressIncrementVal = 1.0f/((float)_delayTimeMillis/(float)UPDATE_INTERVAL);
-		float progress = progressIncrementVal;
+		float progress = 0.0f;
 		for (long progressLoop = 0; progressLoop <= _delayTimeMillis ; progressLoop+=UPDATE_INTERVAL){
 			try {
 				Thread.sleep(UPDATE_INTERVAL);
