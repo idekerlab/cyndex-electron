@@ -1,6 +1,5 @@
 package org.cytoscape.cyndex2.internal.task;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.UUID;
 import javax.swing.JOptionPane;
@@ -61,15 +60,47 @@ public class SaveNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
 	private long _progressDisplayDurationMillis;
 	
 	
-	public SaveNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, boolean alwaysPromptUser, long progressDisplayDurationMillis) {
+	/**
+	 * This constructor is mainly here to make testing easier by enabling caller to 
+	 * set alternate ShowDialogUtil and SaveNetworkDialog objects
+	 * 
+	 * @param serviceRegistrar Used to get CySwingApplication, CyAppManager in createTaskIterator method
+	 * @param alwaysPromptUser If true, user will be prompted with save as dialog 
+	 *                         even if network was loaded from NDEx
+	 * @param progressDisplayDurationMillis Time in millis to display save progress dialog
+	 * @param dialogUtil Wrapper around JOptionPane show calls to make testing easier
+	 * @param dialog Save dialog
+	 */
+	public SaveNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, boolean alwaysPromptUser, long progressDisplayDurationMillis,
+			ShowDialogUtil dialogUtil, SaveNetworkDialog dialog) {
 		this.serviceRegistrar = serviceRegistrar;
 		_alwaysPromptUser = alwaysPromptUser;
-		_dialogUtil = new ShowDialogUtil();
-		_dialog = new SaveNetworkDialog(_dialogUtil);
+		_dialogUtil = dialogUtil;
+		_dialog = dialog;
 		_progressDisplayDurationMillis = progressDisplayDurationMillis;
 		
 	}
+	
+	/**
+	 * Constructor that exposes alwaysPromptUser and creates default ShowDialogUtil and SaveNetworkDialog objects
+	 * 
+	 * @param serviceRegistrar Used to get CySwingApplication, CyAppManager in createTaskIterator method
+	 * @param alwaysPromptUser If true, user will be prompted with save as dialog 
+	 *                         even if network was loaded from NDEx
+	 * @param progressDisplayDurationMillis Time in millis to display save progress dialog
+	 */
+	public SaveNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, boolean alwaysPromptUser, long progressDisplayDurationMillis) {
+		this(serviceRegistrar, alwaysPromptUser, progressDisplayDurationMillis, null, null);
+		_dialogUtil = new ShowDialogUtil();
+		_dialog = new SaveNetworkDialog(_dialogUtil);
+	}
 
+	/**
+	 * Constructor where alwaysPromptUser is set to false
+	 * 
+	 * @param serviceRegistrar Used to get CySwingApplication, CyAppManager in createTaskIterator method
+	 * @param progressDisplayDurationMillis Time in millis to display save progress dialog
+	 */
 	public SaveNetworkToNDExTaskFactoryImpl(CyServiceRegistrar serviceRegistrar, long progressDisplayDurationMillis) {
 		this(serviceRegistrar, false,progressDisplayDurationMillis);
 	}
@@ -98,83 +129,40 @@ public class SaveNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
 	@Override
 	public synchronized TaskIterator createTaskIterator() {
 		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);
-
 		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
-		// check if network is already on NDEx and we have valid credentials...
+
+		// check for a selected current network and if none found display dialog and
+		// return
 		CyNetwork currentNetwork = appManager.getCurrentNetwork();
-		UUID savedUUID = null;
 		if (currentNetwork == null){
 			_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Please select a network to save\n");
 			return new TaskIterator(1, new CanceledTask());
 		}
-		savedUUID = NDExNetworkManager.getUUID(currentNetwork);
+		
+		// Set the save button to enabled for dialog
 		_dialog.setNDExSaveEnabled(true);
-		String desiredRawName = currentNetwork.getRow(currentNetwork).get(CyNetwork.NAME, String.class);
-		String desiredName = desiredRawName == null ? "" : desiredRawName;
-		_dialog.setDesiredNetworkName(desiredName);
+		
+		// Set the desired network name in the save dialog
+		setDesiredNetworkNameInDialog(currentNetwork);
+		
+		// savedUUID will be non null if network came from NDEx
+		UUID savedUUID = NDExNetworkManager.getUUID(currentNetwork);
 		
 		if (_alwaysPromptUser == false && savedUUID != null){
-			try {
-				Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
-				if (selectedServer != null){
-					UpdateUtil.updateIsPossible(currentNetwork, savedUUID,
-							selectedServer.getModelAccessLayer().getNdexRestClient(), 
-							selectedServer.getModelAccessLayer());
-					NDExBasicSaveParameters params = new NDExBasicSaveParameters();
-					params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
-					params.password = ServerManager.INSTANCE.getSelectedServer().getPassword();
-					params.serverUrl = ServerManager.INSTANCE.getSelectedServer().getUrl();
-					params.metadata = new HashMap<>();
-
-					NDExExportTaskFactory fac = new NDExExportTaskFactory(params, true);
-					TaskIterator ti = fac.createTaskIterator(currentNetwork);
-					ti.append(new NDExFinalizeSaveTask(_progressDisplayDurationMillis));
-					return ti; 
-				}
-			} catch(RemoteModificationException rme){
-					Object[] options = {"Yes", "No"};
-					int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(), "Network was modified on remote NDEx server.\n\n"
-							+ "Do you wish to overwrite anyways?",
-							"NDEx Overwrite",
-							JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-							options, options[1]);
-					if (res == 1){
-						LOGGER.debug("User did not want to overwrite. just return");
-						return new TaskIterator(1, new CanceledTask());
-					}
-					if (res == 0){
-						LOGGER.debug("User does want to overwrite");
-						NDExNetworkManager.updateModificationTimeStamp(currentNetwork, rme.getRemoteModification());
-						if (_dialog.getDesiredNetworkName() != null){
-							currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
-						}
-						NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), true);
-						TaskIterator ti = fac.createTaskIterator(currentNetwork);
-						ti.append(new NDExFinalizeSaveTask(_progressDisplayDurationMillis));
-						return ti; 
-					}
-			} catch(NetworkNotFoundInNDExException nfe){
-				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), nfe.getMessage() + "\n\nNetwork is linked to a network in NDEx, but that network\n"
-					+ "\ndoes not exist or is not accessible on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n" + 
-							"for user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + "\n\nClick ok to display Save Network As dialog");
-			} catch(ReadOnlyException re){
-				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Network is set to read only on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " NDEx server\n" + 
-							"for user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + " and cannot be saved.\n\nClick ok to display Save Network As dialog");
-			} catch(WritePermissionException wpe){
-				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "You do not have permission to overwrite this network on " + ServerManager.INSTANCE.getSelectedServer().getUrl() + " NDEx server\n" + 
-							"as user " + ServerManager.INSTANCE.getSelectedServer().getUsername() + "\n\nClick ok to display Save Network As dialog");
-			}catch(Exception ex){
-				ex.printStackTrace();
-				_dialogUtil.showMessageDialog(swingApplication.getJFrame(), "Unable to save due to this error:\n\n"
-						+ ex.getMessage() + "\n\nClick ok to display Save Network As dialog");         
+			// if network is from NDEx and we dont have to prompt the user, attempt to save
+		    // the network and if that succeeds just return the TaskIterator 
+			TaskIterator ti = createSaveOverwriteTaskIterator(swingApplication, currentNetwork, savedUUID);
+			if (ti != null){
+				return ti;
 			}
 		}
 		
+		// setup the gui dialog and exit if that fails
 		if (_dialog.createGUI(savedUUID) == false){
 			return new TaskIterator(1, new CanceledTask());
 		}
 		
-		
+		// display the save as dialog
 		Object[] options = {_dialog.getMainSaveButton(), _dialog.getMainCancelButton()};
 		int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(),
                                            this._dialog,
@@ -184,6 +172,7 @@ public class SaveNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
                            null,
                            options,
                            options[0]);
+		
 		// if res is 0 then the user wants to save the network
         if (res == 0){
 			// Need to determine if an overwrite is desired
@@ -191,15 +180,136 @@ public class SaveNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
 			if (overwriteNetwork != null){
 				NDExNetworkManager.updateModificationTimeStamp(currentNetwork, overwriteNetwork.getModificationTime());
 			}
+			// make sure the network name the user wants to save as is set as the network name
+			// in Cytoscape
 			currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME, _dialog.getDesiredNetworkName());
-			NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), overwriteNetwork != null);
-			TaskIterator ti = fac.createTaskIterator(currentNetwork);
-			ti.append(new NDExFinalizeSaveTask(_progressDisplayDurationMillis));
-			return ti;			
+			
+			// create the save tasks and return the TaskIterator
+			return createExportAndFinalizeTasks(currentNetwork, overwriteNetwork != null); 			
         }
+		// If we are here the user did not wish to save the network. just return
+		// the canceled task
 		return new TaskIterator(1, new CanceledTask());
 	}
 	
+	/**
+	 * Gets the current network name and sets that name as the desired name
+	 * in the save as dialog. If the raw name is null then an empty string 
+	 * is set as the network name
+	 * @param currentNetwork 
+	 */
+	private void setDesiredNetworkNameInDialog(CyNetwork currentNetwork){
+		String desiredRawName = currentNetwork.getRow(currentNetwork).get(CyNetwork.NAME, String.class);
+		String desiredName = desiredRawName == null ? "" : desiredRawName;
+		_dialog.setDesiredNetworkName(desiredName);
+	}
+	
+	/**
+	 * Creates export task that saves the network and a finalize task that merely 
+	 * adds a delay so the progress dialog is displayed to the user
+	 * @param currentNetwork Network to save
+	 * @param overwrite true if the save is an overwrite
+	 * @return tasks to save the network
+	 */
+	private TaskIterator createExportAndFinalizeTasks(CyNetwork currentNetwork, boolean overwrite){
+		NDExExportTaskFactory fac = new NDExExportTaskFactory(getNDExBasicSaveParameters(), overwrite);
+		TaskIterator ti = fac.createTaskIterator(currentNetwork);
+		ti.append(new NDExFinalizeSaveTask(_progressDisplayDurationMillis));
+		return ti;
+	}
+	/**
+	 * Checks if overwrite save to NDEx is possible and if it is, returns a TaskIterator
+	 * with tasks to save the network to NDEx or to just cancel the process
+	 * 
+	 * The user is asked (via dialog) if they wish to overwrite the network if the network
+	 * has a more recent modification time on the NDEx server. 
+	 * 
+	 * Otherwise the user is shown a dialog if the save can not be performed due to:
+	 *  - Permissions
+	 *  - Read only flag 
+	 *  - Network is not actually on NDEx
+	 *  - Any other error
+	 * 
+	 * @param swingApplication Cytoscape Desktop GUI
+	 * @param currentNetwork Currently selected network
+	 * @param savedUUID NDEX uuid found in hidden table 
+	 * @return TaskIterator upon if overwrite is desired or save is not desired otherwise null
+	 */
+	private TaskIterator createSaveOverwriteTaskIterator(CySwingApplication swingApplication,
+			CyNetwork currentNetwork, UUID savedUUID){
+		String dialogMessage = null;
+		try {
+			Server selectedServer = ServerManager.INSTANCE.getSelectedServer();
+			// if no NDEx server is selected, just return cause we have no
+			// way of connecting to NDEx
+			if (selectedServer == null){
+				LOGGER.debug("No NDEx credentials selected");
+				return null;
+			}
+			
+			// See if update is possible, this function raises exceptions if
+			// there is an issue
+			UpdateUtil.updateIsPossible(currentNetwork, savedUUID,
+					selectedServer.getModelAccessLayer().getNdexRestClient(), 
+					selectedServer.getModelAccessLayer());
+			
+			// Update is possible, create the save task with overwrite flag set to true
+			return createExportAndFinalizeTasks(currentNetwork, true); 
+		} catch(RemoteModificationException rme){
+			// Network was modified on NDEx, ask the user if they want to overwrite
+			Object[] options = {"Yes", "No"};
+			int res = _dialogUtil.showOptionDialog(swingApplication.getJFrame(),
+					"Network was modified on remote NDEx server.\n\n"
+					+ "Do you wish to overwrite anyways?",
+					"NDEx Overwrite",
+					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+					options, options[1]);
+			if (res == 1){
+				LOGGER.debug("User did not want to overwrite.");
+				return new TaskIterator(1, new CanceledTask());
+			}
+			if (res == 0){
+				LOGGER.debug("User does want to overwrite");
+				NDExNetworkManager.updateModificationTimeStamp(currentNetwork,
+						rme.getRemoteModification());
+				if (_dialog.getDesiredNetworkName() != null){
+					currentNetwork.getRow(currentNetwork).set(CyNetwork.NAME,
+							_dialog.getDesiredNetworkName());
+				}
+				return createExportAndFinalizeTasks(currentNetwork, true); 
+			}
+		} catch(NetworkNotFoundInNDExException nfe){
+			dialogMessage = nfe.getMessage() + "\n\nNetwork is linked to a network in NDEx, but that network\n"
+					+ "\ndoes not exist or is not accessible on "
+					+ ServerManager.INSTANCE.getSelectedServer().getUrl() + " server\n"
+					+ "for user " + ServerManager.INSTANCE.getSelectedServer().getUsername();
+			LOGGER.info(dialogMessage, nfe);
+		} catch(ReadOnlyException re){
+			dialogMessage = "Network is set to read only on "
+					+ ServerManager.INSTANCE.getSelectedServer().getUrl() + " NDEx server\n"
+					+ "for user " + ServerManager.INSTANCE.getSelectedServer().getUsername()
+					+ " and cannot be saved.";
+			
+			LOGGER.info(dialogMessage, re);
+		} catch(WritePermissionException wpe){
+			dialogMessage = "You do not have permission to overwrite this network on "
+					+ ServerManager.INSTANCE.getSelectedServer().getUrl() + " NDEx server\n"
+					+ "as user " + ServerManager.INSTANCE.getSelectedServer().getUsername();
+			LOGGER.info(dialogMessage, wpe);
+		}catch(Exception ex){
+			dialogMessage =  "Unable to save due to this error:\n\n" + ex.getMessage();
+			LOGGER.info(dialogMessage, ex);
+		}
+		_dialogUtil.showMessageDialog(swingApplication.getJFrame(),
+				dialogMessage + "\n\nClick ok to display Save Network As dialog");
+		return null;
+	}
+	
+	/**
+	 * Gets NDEx credentials of the user currently selected profile
+	 * 
+	 * @return 
+	 */
 	private NDExBasicSaveParameters getNDExBasicSaveParameters(){
 		NDExBasicSaveParameters params = new NDExBasicSaveParameters();
                                         params.username = ServerManager.INSTANCE.getSelectedServer().getUsername();
