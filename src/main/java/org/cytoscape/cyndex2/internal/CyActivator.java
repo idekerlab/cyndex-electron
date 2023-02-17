@@ -38,11 +38,13 @@ import org.cytoscape.cyndex2.internal.ui.ImportUserNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.ImportNetworkFromNDExTaskFactory;
 import org.cytoscape.cyndex2.internal.ui.MainToolBarAction;
 import org.cytoscape.cyndex2.internal.ui.SaveNetworkToNDExTaskFactory;
+import org.cytoscape.cyndex2.internal.ui.swing.BindHotKeysPanel;
 import org.cytoscape.cyndex2.internal.ui.swing.OpenNetworkDialog;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.cyndex2.internal.util.CIServiceManager;
 import org.cytoscape.cyndex2.internal.util.ExternalAppManager;
 import org.cytoscape.cyndex2.internal.util.IconUtil;
+import org.cytoscape.cyndex2.internal.util.OpenSaveHotKeyChanger;
 import org.cytoscape.cyndex2.internal.util.StringResources;
 import org.cytoscape.io.read.InputStreamTaskFactory;
 import org.cytoscape.io.write.CyNetworkViewWriterFactory;
@@ -52,7 +54,6 @@ import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.NetworkCollectionTaskFactory;
 import org.cytoscape.task.RootNetworkCollectionTaskFactory;
-import static org.cytoscape.work.ServiceProperties.ACCELERATOR;
 import static org.cytoscape.work.ServiceProperties.INSERT_SEPARATOR_AFTER;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP_LONG_DESCRIPTION;
@@ -180,11 +181,26 @@ public class CyActivator extends AbstractCyActivator {
 	 * @return true if App should NOT take over hotkeys, false otherwise
 	 */
 	public static boolean disableAppControlOfHotKeys(){
+		if (cyProps == null){
+			return false;
+		}
 		String val = cyProps.getProperties().getProperty("cyndex2.disable.hotkey.control");
 		if (val == null || val.trim().isEmpty()){
 			return false;
 		}
 		return Boolean.parseBoolean(val);
+	}
+	
+	/**
+	 * Updates cyndex2.disable.hotkey.control property with **val** passed in
+	 * or does nothing if cyProps was not initialized in this object
+	 * @param val 
+	 */
+	public static void setDisableAppControlOfHotKeys(boolean val){
+		if (cyProps == null){
+			return;
+		}
+		cyProps.getProperties().setProperty("cyndex2.disable.hotkey.control", Boolean.toString(val));
 	}
 	
 	private void renameOpenSaveAndSaveAsMenus(JMenu menu){
@@ -282,7 +298,9 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveNetworkTaskFactoryProps.setProperty(TITLE, "Network to NDEx...");
 		registerService(bc, ndexSaveNetworkTaskFactory, TaskFactory.class, ndexSaveNetworkTaskFactoryProps);
 		ShowDialogUtil dialogUtil = new ShowDialogUtil();
-		OpenNetworkDialog openDialog = new OpenNetworkDialog(CyActivator.numberOfNDExNetworksToList());
+		OpenSaveHotKeyChanger hotKeyChanger = new OpenSaveHotKeyChanger(swingApplication.getJMenu(CyActivator.FILE_MENU_NAME));
+		OpenNetworkDialog openDialog = new OpenNetworkDialog(CyActivator.numberOfNDExNetworksToList(), 
+				new BindHotKeysPanel(hotKeyChanger));
 		
 		final OpenNetworkFromNDExTaskFactoryImpl openNetworkFac = new OpenNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
 		final Properties openNetworkTaskFactoryProps = new Properties();
@@ -291,10 +309,6 @@ public class CyActivator extends AbstractCyActivator {
 		openNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Open Network from NDEx");
         openNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.1");
 		openNetworkTaskFactoryProps.setProperty(TITLE, CyActivator.OPEN_NETWORK);
-		
-		if (disableHotKeyControl == false){
-			openNetworkTaskFactoryProps.setProperty(ACCELERATOR, CyActivator.OPEN_HOTKEY);
-		}
 		
 		registerService(bc, openNetworkFac, TaskFactory.class, openNetworkTaskFactoryProps);
 		
@@ -310,9 +324,6 @@ public class CyActivator extends AbstractCyActivator {
 		saveNetworkTaskFactoryProps.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
 		saveNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
 		
-		if (disableHotKeyControl == false){
-			saveNetworkTaskFactoryProps.setProperty(ACCELERATOR, CyActivator.SAVE_HOTKEY);
-		}
 		registerService(bc, saveNetworkFac, TaskFactory.class, saveNetworkTaskFactoryProps);
 		
 		final SaveNetworkToNDExTaskFactoryImpl saveNetworkFacAlwaysPrompt = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, true, progressDisplayDuration);
@@ -325,10 +336,6 @@ public class CyActivator extends AbstractCyActivator {
 		saveNetworkTaskFactoryPropsPrompt.setProperty(INSERT_SEPARATOR_AFTER, "true");
 		saveNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
 		saveNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
-		
-		if (disableHotKeyControl == false){
-			saveNetworkTaskFactoryPropsPrompt.setProperty(ACCELERATOR, CyActivator.SAVEAS_HOTKEY);
-		}
 		
 		registerService(bc, saveNetworkFacAlwaysPrompt, TaskFactory.class, saveNetworkTaskFactoryPropsPrompt);
 		
@@ -398,6 +405,13 @@ public class CyActivator extends AbstractCyActivator {
 		saveCollectionToNDExContextMenuProps.setProperty(MENU_GRAVITY, "1.0");
 		registerService(bc, saveCollectionToNDExContextMenuTaskFactory, RootNetworkCollectionTaskFactory.class,
 				saveCollectionToNDExContextMenuProps);
+		
+		// if disableHotKeyControl is false then we CAN put the
+		// hotkeys onto the network menus, otherwise leave things as
+		// is 
+		if (disableHotKeyControl == false){
+			hotKeyChanger.putHotKeysOntoNetworkMenus();
+		}
 		
 	}
 

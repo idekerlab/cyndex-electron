@@ -23,10 +23,14 @@ public class OpenSaveHotKeyChanger {
 	public final static Set<String> SESSION_MENU_NAMES = new HashSet<>(Arrays.asList(CyActivator.OPEN_SESSION, CyActivator.SAVE_SESSION, CyActivator.SAVE_SESSION_AS));
 	public final static Set<String> NETWORK_MENU_NAMES = new HashSet<>(Arrays.asList(CyActivator.OPEN_NETWORK, CyActivator.SAVE_NETWORK, CyActivator.SAVE_NETWORK_AS));
 
-	// Logger for this activator
+	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(OpenSaveHotKeyChanger.class);
 	
+	private JMenu _fileMenu;
 	
+	public OpenSaveHotKeyChanger(JMenu fileMenu){
+		_fileMenu = fileMenu;
+	}
 	private Map<String, KeyStroke> getMenuHotKeys(JMenu menu, Set<String> menuNames){
 		HashMap<String, KeyStroke> acceleratorMap = new HashMap<>();
 		if (menu == null){
@@ -51,15 +55,16 @@ public class OpenSaveHotKeyChanger {
 	 * items and moves them to the network open, save, and save as file menu items
 	 * @param menu 
 	 */
-	public void putHotKeysOntoNetworkMenus(JMenu menu){
-		if (menu == null){
+	public void putHotKeysOntoNetworkMenus(){
+		if (_fileMenu == null){
 			logger.info("MENU IS NULL");
+			return;
 		}
 		
-		Map<String, KeyStroke> acceleratorMap = getMenuHotKeys(menu, SESSION_MENU_NAMES);
+		Map<String, KeyStroke> acceleratorMap = getMenuHotKeys(_fileMenu, SESSION_MENU_NAMES);
 		
-		logger.info("Number of menu items: " + menu.getMenuComponentCount());
-		for (Component c : menu.getMenuComponents()){
+		logger.info("Number of menu items: " + _fileMenu.getMenuComponentCount());
+		for (Component c : _fileMenu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
 				JMenuItem curMenuItem = (JMenuItem)c;				
@@ -81,15 +86,16 @@ public class OpenSaveHotKeyChanger {
 	 * items and moves them to the session open, save, and save as file menu items
 	 * @param menu 
 	 */
-	public void putHotKeysOntoSessionMenus(JMenu menu){
-		if (menu == null){
+	public void putHotKeysOntoSessionMenus(){
+		if (_fileMenu == null){
 			logger.info("MENU IS NULL");
+			return;
 		}
 
-		Map<String, KeyStroke> acceleratorMap = getMenuHotKeys(menu, NETWORK_MENU_NAMES);
+		Map<String, KeyStroke> acceleratorMap = getMenuHotKeys(_fileMenu, NETWORK_MENU_NAMES);
 		
-		logger.info("Number of menu items: " + menu.getMenuComponentCount());
-		for (Component c : menu.getMenuComponents()){
+		logger.info("Number of menu items: " + _fileMenu.getMenuComponentCount());
+		for (Component c : _fileMenu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
 				JMenuItem curMenuItem = (JMenuItem)c;				

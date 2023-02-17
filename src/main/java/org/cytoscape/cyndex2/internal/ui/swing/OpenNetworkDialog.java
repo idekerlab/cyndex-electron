@@ -8,15 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -96,6 +92,7 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 	private TableRowSorter _myNetworksTableSorter;
 	private JTable _myNetworksTable;
 	private JTable _searchTable;
+	private BindHotKeysPanel _hotKeysPanel;
 	
 	/**
 	 * Flag to denote whether the open NDEx panel has ever been displayed
@@ -109,7 +106,13 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 	}
 	
 	public OpenNetworkDialog(int networkTableLimit){
+		this(networkTableLimit, null);
+		
+	}
+	
+	public OpenNetworkDialog(int networkTableLimit, BindHotKeysPanel hotKeysPanel){
 		super(networkTableLimit);
+		_hotKeysPanel = hotKeysPanel;
 		_guiLoaded = false;
 	}
 	
@@ -165,9 +168,6 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 						}
                     }
                 });
-
-			// TODO: need to remember desired behavior via preferences
-			//_openSessionButton.setEnabled(true);
 			_openNDExButton.doClick();
 
 			// listen for changes to NDEx credentials
@@ -273,7 +273,7 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 		_myNetworksTable = new JTable(_myNetworksTableModel);
 		_myNetworksTableSorter = new TableRowSorter<>(_myNetworksTableModel);
 		_myNetworksTable.setRowSorter(_myNetworksTableSorter);
-		_myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
+		_myNetworksTable.setPreferredScrollableViewportSize(new Dimension(400, 210));
         _myNetworksTable.setFillsViewportHeight(true);
 		
 		_myNetworksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -343,7 +343,7 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 		myNetPanel.add(myNetSearchPanel, BorderLayout.PAGE_START);
 		myNetPanel.setName(OpenNetworkDialog.MY_NETWORKS_TABBED_PANE);
 		JScrollPane scrollPane = new JScrollPane(_myNetworksTable);
-		scrollPane.setPreferredSize(new Dimension(570,250));
+		scrollPane.setPreferredSize(new Dimension(570,210));
 		myNetPanel.add(scrollPane, BorderLayout.PAGE_END);
 		
 		_ndexTabbedPane.add("My Networks", myNetPanel);
@@ -357,7 +357,7 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 		sortKeys.add(new RowSorter.SortKey(MyNetworksWithOwnerTableModel.MODIFIED_COL, SortOrder.DESCENDING));
 		_searchTable.getRowSorter().setSortKeys(sortKeys);
 		
-		_searchTable.setPreferredScrollableViewportSize(new Dimension(400, 250));
+		_searchTable.setPreferredScrollableViewportSize(new Dimension(400, 210));
         _searchTable.setFillsViewportHeight(true);
 		_searchTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_searchTable.setDefaultRenderer(Timestamp.class, new NDExTimestampRenderer());
@@ -434,7 +434,7 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 		searchPanel.add(searchSearchPanel, BorderLayout.PAGE_START);
 		searchPanel.setName(SEARCH_NETWORKS_TABBED_PANE);
 		JScrollPane scrollPane = new JScrollPane(_searchTable);
-		scrollPane.setPreferredSize(new Dimension(570,250));
+		scrollPane.setPreferredSize(new Dimension(570,210));
 		searchPanel.add(scrollPane, BorderLayout.PAGE_END);		
 		_ndexTabbedPane.add("Search NDEx", searchPanel);
 	}
@@ -456,7 +456,7 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 
 		// lets add tabbed pane
 		_ndexTabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		_ndexTabbedPane.setPreferredSize(new Dimension(600, 350));
+		_ndexTabbedPane.setPreferredSize(new Dimension(600, 308));
 		_ndexTabbedPane.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
@@ -474,6 +474,10 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 		_ndexPanel.add(_ndexTabbedPane, BorderLayout.PAGE_END);
 		createNDExMyNetworksTabbedPane();
 		createNDExSearchAllTabbedPane();
+		
+		if (_hotKeysPanel != null){
+			_ndexPanel.add(_hotKeysPanel.getHotKeysPanel(), BorderLayout.PAGE_END);
+		}
 	}
 	
 	/**
