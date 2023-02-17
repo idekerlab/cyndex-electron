@@ -19,6 +19,7 @@ import org.cytoscape.model.CyNetwork;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
+import org.cytoscape.cyndex2.internal.util.OpenSaveHotKeyChanger;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -131,6 +132,8 @@ public class SaveNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
 		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);
 		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
 
+		OpenSaveHotKeyChanger x = new OpenSaveHotKeyChanger();
+			x.putHotKeysOntoNetworkMenus(swingApplication.getJMenu("File"));
 		// check for a selected current network and if none found display dialog and
 		// return
 		CyNetwork currentNetwork = appManager.getCurrentNetwork();

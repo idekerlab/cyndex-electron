@@ -67,6 +67,21 @@ import org.slf4j.LoggerFactory;
 public class CyActivator extends AbstractCyActivator {
 
 	public static final String CYNDEX2_OWNER = "cyndex2";
+	
+	public final static String OPEN_HOTKEY = "cmd o";
+	public final static String SAVE_HOTKEY = "cmd s";
+	public final static String SAVEAS_HOTKEY = "cmd shift s";
+	
+	public static final String OPEN_SESSION = "Open Session...";
+	public static final String SAVE_SESSION = "Save Session";
+	public static final String SAVE_SESSION_AS = "Save Session As...";
+	
+	
+	public static final String OPEN_NETWORK = "Open Network";
+	public static final String SAVE_NETWORK = "Save Network";
+	public static final String SAVE_NETWORK_AS = "Save Network As...";
+	
+	public static final String FILE_MENU_NAME = "File";
 	// Logger for this activator
 	private static final Logger logger = LoggerFactory.getLogger(CyActivator.class);
 	
@@ -153,71 +168,41 @@ public class CyActivator extends AbstractCyActivator {
 		try {
 			return Integer.parseInt(val);
 		} catch(NumberFormatException nfe){
-			logger.warn("Unable to convert value of cyndex2.progressDisplayDuration property to integer, using default value of 400: " + nfe.getMessage());
+			logger.warn("Unable to convert value of cyndex2.numberOfNDExNetworksToList property to integer, using default value of 400: " + nfe.getMessage());
 			return 400;
 		}
 	}
 	
-	public static boolean canThisAppControlSaveHotKey(){
-		String val = cyProps.getProperties().getProperty("cytoscape.save.hotkey.owner");
+	/**
+	 * Checks property to see if this app should NOT take over control of hotkeys
+	 * by examining cyndex2.disable.hotkey.control property which needs to be set to true
+	 * or 1
+	 * @return true if App should NOT take over hotkeys, false otherwise
+	 */
+	public static boolean disableAppControlOfHotKeys(){
+		String val = cyProps.getProperties().getProperty("cyndex2.disable.hotkey.control");
 		if (val == null || val.trim().isEmpty()){
 			return false;
 		}
-		if (val.equalsIgnoreCase(CyActivator.CYNDEX2_OWNER)){
-			return true;
-		}
-		return false;
+		return Boolean.parseBoolean(val);
 	}
 	
-	public static boolean canThisAppControlSaveAsHotKey(){
-		String val = cyProps.getProperties().getProperty("cytoscape.saveas.hotkey.owner");
-		if (val == null || val.trim().isEmpty()){
-			return false;
-		}
-		if (val.equalsIgnoreCase(CyActivator.CYNDEX2_OWNER)){
-			return true;
-		}
-		return false;
-	}
-	
-	public static boolean canThisAppControlOpenHotKey(){
-		String val = cyProps.getProperties().getProperty("cytoscape.open.hotkey.owner");
-		if (val == null || val.trim().isEmpty()){
-			return false;
-		}
-		if (val.equalsIgnoreCase(CyActivator.CYNDEX2_OWNER)){
-			return true;
-		}
-		return false;
-	}
-	
-	private boolean renameOpenSaveAndSaveAsMenus(JMenu menu){
+	private void renameOpenSaveAndSaveAsMenus(JMenu menu){
 		if (menu == null){
 			logger.info("MENU IS NULL");
-			return false;
 		}
 		logger.info("Number of menu items: " + menu.getMenuComponentCount());
-		boolean openUpdated = false;
-		boolean saveUpdated = false;
-		boolean saveAsUpdated = false;
+
 		for (Component c : menu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
 				JMenuItem curMenuItem = (JMenuItem)c;
-				if (curMenuItem.getText().equals("Open...") || curMenuItem.getText().equals("Open Session...")){
-					curMenuItem.setText("Open Session...");
-					curMenuItem.setAccelerator(null);
-					openUpdated = true;
-					
-				} else if (curMenuItem.getText().equals("Save") || curMenuItem.getText().equals("Save Session")){
-					curMenuItem.setText("Save Session");
-					curMenuItem.setAccelerator(null);
-					saveUpdated = true;
-
-				} else if (curMenuItem.getText().equals("Save As...") || curMenuItem.getText().equals("Save Session As...")){
-					curMenuItem.setText("Save Session As...");
-					curMenuItem.setAccelerator(null);
-					saveAsUpdated = true;
+				if (curMenuItem.getText().equals("Open...") || curMenuItem.getText().equals(CyActivator.OPEN_SESSION)){
+					curMenuItem.setText(CyActivator.OPEN_SESSION);
+				} else if (curMenuItem.getText().equals("Save") || curMenuItem.getText().equals(CyActivator.SAVE_SESSION)){
+					curMenuItem.setText(CyActivator.SAVE_SESSION);
+				} else if (curMenuItem.getText().equals("Save As...") || curMenuItem.getText().equals(CyActivator.SAVE_SESSION_AS)){
+					curMenuItem.setText(CyActivator.SAVE_SESSION_AS);
 				} else if (curMenuItem.getText().equals("Open Recent")){
 					curMenuItem.setText("Open Recent Session");
 				} else if (curMenuItem.getText().equals("Close")){
@@ -225,13 +210,6 @@ public class CyActivator extends AbstractCyActivator {
 				}
 			}
 		}
-		if (openUpdated == saveUpdated && saveUpdated == saveAsUpdated){
-			logger.warn("Open... menu  renamed to Open Session..., "
-					+ "Save menu renamed to Save Session, Save As... menu renamed to Save Session As... "
-					+ "and accelerators have been removed");
-			return true;
-		}
-		return false;
 	}
 	
 	@Override
@@ -267,10 +245,15 @@ public class CyActivator extends AbstractCyActivator {
 		final CySwingApplication swingApplication = getService(bc, CySwingApplication.class);
 		CyServiceModule.setSwingApplication(swingApplication);
 		
-		boolean menusRenamed = this.renameOpenSaveAndSaveAsMenus(swingApplication.getJMenu("File"));
 		
 		cyProps = getService(bc, CyProperty.class, "(cyPropertyName=cytoscape3.props)");
 		taskManager = getService(bc, TaskManager.class);
+		
+		// For Cytoscape versions earlier then 3.10, append Session to menu names
+		renameOpenSaveAndSaveAsMenus(swingApplication.getJMenu(CyActivator.FILE_MENU_NAME));
+		
+		// Check preferences to see if we should move the hot keys
+		boolean disableHotKeyControl = CyActivator.disableAppControlOfHotKeys();
 		
 		
 	    File configDir = config.getAppConfigurationDirectoryLocation(CyActivator.class); 
@@ -301,55 +284,53 @@ public class CyActivator extends AbstractCyActivator {
 		ShowDialogUtil dialogUtil = new ShowDialogUtil();
 		OpenNetworkDialog openDialog = new OpenNetworkDialog(CyActivator.numberOfNDExNetworksToList());
 		
-		final OpenNetworkFromNDExTaskFactoryImpl openSessionOrNetworkFac = new OpenNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
-		final Properties ndexOpenNetworkTaskFactoryProps = new Properties();
-		ndexOpenNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
-		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP, "Open Network from NDEx");
-		ndexOpenNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Open Network from NDEx");
-		ndexOpenNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "1.0");
-
-		if (menusRenamed == true){
-			ndexOpenNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.1");
-			ndexOpenNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd o");
-		}
-		ndexOpenNetworkTaskFactoryProps.setProperty(TITLE, "Open Network");
-		//ndexOpenNetworkTaskFactoryProps.setProperty(TOOL_BAR_GRAVITY, "1.1");
-		//ndexOpenNetworkTaskFactoryProps.setProperty(IN_TOOL_BAR, "true");
+		final OpenNetworkFromNDExTaskFactoryImpl openNetworkFac = new OpenNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
+		final Properties openNetworkTaskFactoryProps = new Properties();
+		openNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, CyActivator.FILE_MENU_NAME);
+		openNetworkTaskFactoryProps.setProperty(TOOLTIP, "Open Network from NDEx");
+		openNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Open Network from NDEx");
+        openNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.1");
+		openNetworkTaskFactoryProps.setProperty(TITLE, CyActivator.OPEN_NETWORK);
 		
-		registerService(bc, openSessionOrNetworkFac, TaskFactory.class, ndexOpenNetworkTaskFactoryProps);
+		if (disableHotKeyControl == false){
+			openNetworkTaskFactoryProps.setProperty(ACCELERATOR, CyActivator.OPEN_HOTKEY);
+		}
+		
+		registerService(bc, openNetworkFac, TaskFactory.class, openNetworkTaskFactoryProps);
 		
 		long progressDisplayDuration = CyActivator.progressDisplayDuration();
 		
-		final SaveNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFac = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, progressDisplayDuration);
-		final Properties ndexSaveSessionOrNetworkTaskFactoryProps = new Properties();
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ID, "saveSessionOrNetworkToCloudTaskFactory");
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, "File");
+		final SaveNetworkToNDExTaskFactoryImpl saveNetworkFac = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, progressDisplayDuration);
+		final Properties saveNetworkTaskFactoryProps = new Properties();
+		saveNetworkTaskFactoryProps.setProperty(ID, "saveNetworkToCloudTaskFactory");
+		saveNetworkTaskFactoryProps.setProperty(PREFERRED_MENU, CyActivator.FILE_MENU_NAME);
+		saveNetworkTaskFactoryProps.setProperty(TITLE, CyActivator.SAVE_NETWORK);
 		
-		if (menusRenamed == true){
-			ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd s");
+		saveNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.2");
+		saveNetworkTaskFactoryProps.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
+		saveNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
+		
+		if (disableHotKeyControl == false){
+			saveNetworkTaskFactoryProps.setProperty(ACCELERATOR, CyActivator.SAVE_HOTKEY);
 		}
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TITLE, "Save Network");
+		registerService(bc, saveNetworkFac, TaskFactory.class, saveNetworkTaskFactoryProps);
 		
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.2");
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
-		ndexSaveSessionOrNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
-		registerService(bc, saveSessionOrNetworkFac, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryProps);
+		final SaveNetworkToNDExTaskFactoryImpl saveNetworkFacAlwaysPrompt = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, true, progressDisplayDuration);
+		final Properties saveNetworkTaskFactoryPropsPrompt = new Properties();
+		saveNetworkTaskFactoryPropsPrompt.setProperty(ID, "saveNetworkToCloudAlwaysPromptTaskFactory");
+		saveNetworkTaskFactoryPropsPrompt.setProperty(PREFERRED_MENU, CyActivator.FILE_MENU_NAME);
 		
-		final SaveNetworkToNDExTaskFactoryImpl saveSessionOrNetworkFacAlwaysPrompt = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, true, progressDisplayDuration);
-		final Properties ndexSaveSessionOrNetworkTaskFactoryPropsPrompt = new Properties();
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(ID, "saveSessionOrNetworkToCloudAlwaysPromptTaskFactory");
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(PREFERRED_MENU, "File");
+		saveNetworkTaskFactoryPropsPrompt.setProperty(TITLE, CyActivator.SAVE_NETWORK_AS);
+		saveNetworkTaskFactoryPropsPrompt.setProperty(MENU_GRAVITY, "0.3");
+		saveNetworkTaskFactoryPropsPrompt.setProperty(INSERT_SEPARATOR_AFTER, "true");
+		saveNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
+		saveNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
 		
-		if (menusRenamed == true){
-			ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(ACCELERATOR, "cmd shift s");
+		if (disableHotKeyControl == false){
+			saveNetworkTaskFactoryPropsPrompt.setProperty(ACCELERATOR, CyActivator.SAVEAS_HOTKEY);
 		}
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TITLE, "Save Network As...");
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(MENU_GRAVITY, "0.3");
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(INSERT_SEPARATOR_AFTER, "true");
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
-		ndexSaveSessionOrNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
-		registerService(bc, saveSessionOrNetworkFacAlwaysPrompt, TaskFactory.class, ndexSaveSessionOrNetworkTaskFactoryPropsPrompt);
 		
+		registerService(bc, saveNetworkFacAlwaysPrompt, TaskFactory.class, saveNetworkTaskFactoryPropsPrompt);
 		
 		// TF for NDEx Save Collection
 		final OpenSaveCollectionTaskFactory ndexSaveCollectionTaskFactory = new OpenSaveCollectionTaskFactory(appManager);
@@ -418,20 +399,6 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, saveCollectionToNDExContextMenuTaskFactory, RootNetworkCollectionTaskFactory.class,
 				saveCollectionToNDExContextMenuProps);
 		
-		if (menusRenamed){
-			/**
-			ShowDialogUtil dialogUtil = new ShowDialogUtil();
-			dialogUtil.showMessageDialog(swingApplication.getJFrame(),
-					"<html><center><font color=\"#ff0000\" size=\"+4\"><b>NOT FOR PRODUCTION</b></font></center><br/><br/>"
-					+ "<font color=\"#ff0000\">THIS IMPLEMENTATION IS EXPERIMENTAL AND MAY CAUSE DATA LOSS</font><br/><br/>"
-					+ "CyNDEx2 Core App has <font color=\"#ff0000\"><b>replaced</b></font> "
-					+ "<b>Open..., Save</b>, & <b>Save As...</b> File menu items & associated hot keys<br/><br/>"
-					+ "For legacy behavior, uninstall CyNDEx-2 App & restart Cytsocape <b>or</b> use <b>Open Session, Save Session,</b> or <b>Save Session As</b> menu items<br/><br/>"
-					+ "<font color=\"#ff0000\">YOU HAVE BEEN WARNED!!!!</font><br/><br/>"
-					+ "Have a nice day.</html>", "Warning", JOptionPane.ERROR_MESSAGE);
-			*/
-			logger.warn("Experimental CyNDEx-2 app has replaced open/save menus with internal versions!!!!");
-		}
 	}
 
 	@Override

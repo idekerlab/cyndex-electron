@@ -8,6 +8,7 @@ import org.cytoscape.cyndex2.internal.util.ServerManager;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
+import org.cytoscape.cyndex2.internal.util.OpenSaveHotKeyChanger;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -62,7 +63,7 @@ public class OpenNetworkFromNDExTaskFactoryImpl extends AbstractTaskFactory {
 	
 	@Override
 	public synchronized TaskIterator createTaskIterator() {
-		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);		
+		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);
 		if (_dialog.createGUI() == false){
 			LOGGER.warn("Unable to create GUI for open network from NDEx");
 			return new TaskIterator(1, new CanceledTask());
