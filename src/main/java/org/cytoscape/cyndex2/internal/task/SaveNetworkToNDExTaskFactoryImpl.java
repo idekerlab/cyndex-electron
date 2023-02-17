@@ -132,8 +132,6 @@ public class SaveNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
 		final CySwingApplication swingApplication = serviceRegistrar.getService(CySwingApplication.class);
 		final CyApplicationManager appManager = serviceRegistrar.getService(CyApplicationManager.class);
 
-		OpenSaveHotKeyChanger x = new OpenSaveHotKeyChanger();
-			x.putHotKeysOntoNetworkMenus(swingApplication.getJMenu("File"));
 		// check for a selected current network and if none found display dialog and
 		// return
 		CyNetwork currentNetwork = appManager.getCurrentNetwork();
