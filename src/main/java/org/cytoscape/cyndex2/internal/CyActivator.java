@@ -42,14 +42,17 @@ import org.cytoscape.cyndex2.internal.ui.swing.BindHotKeysPanel;
 import org.cytoscape.cyndex2.internal.ui.swing.OpenNetworkDialog;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
 import org.cytoscape.cyndex2.internal.util.CIServiceManager;
+import org.cytoscape.cyndex2.internal.util.CyNDExPropertyListener;
 import org.cytoscape.cyndex2.internal.util.ExternalAppManager;
 import org.cytoscape.cyndex2.internal.util.IconUtil;
 import org.cytoscape.cyndex2.internal.util.OpenSaveHotKeyChanger;
 import org.cytoscape.cyndex2.internal.util.StringResources;
+import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.io.read.InputStreamTaskFactory;
 import org.cytoscape.io.write.CyNetworkViewWriterFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.property.CyProperty;
+import org.cytoscape.property.PropertyUpdatedEvent;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.NetworkCollectionTaskFactory;
@@ -69,10 +72,6 @@ public class CyActivator extends AbstractCyActivator {
 
 	public static final String CYNDEX2_OWNER = "cyndex2";
 	
-	public final static String OPEN_HOTKEY = "cmd o";
-	public final static String SAVE_HOTKEY = "cmd s";
-	public final static String SAVEAS_HOTKEY = "cmd shift s";
-	
 	public static final String OPEN_SESSION = "Open Session...";
 	public static final String SAVE_SESSION = "Save Session";
 	public static final String SAVE_SESSION_AS = "Save Session As...";
@@ -83,6 +82,8 @@ public class CyActivator extends AbstractCyActivator {
 	public static final String SAVE_NETWORK_AS = "Save Network As...";
 	
 	public static final String FILE_MENU_NAME = "File";
+	
+	public static final String DISABLE_HOTKEY_CONTROL_PROPERTY = "cyndex2.disable.hotkey.control";
 	// Logger for this activator
 	private static final Logger logger = LoggerFactory.getLogger(CyActivator.class);
 	
@@ -95,6 +96,7 @@ public class CyActivator extends AbstractCyActivator {
 
 	private CIServiceManager ciServiceManager;
 	public static TaskManager<?, ?> taskManager;
+	private static CyEventHelper _cyEventHelper;
 
 	public CyActivator() {
 		super();
@@ -184,7 +186,7 @@ public class CyActivator extends AbstractCyActivator {
 		if (cyProps == null){
 			return false;
 		}
-		String val = cyProps.getProperties().getProperty("cyndex2.disable.hotkey.control");
+		String val = cyProps.getProperties().getProperty(DISABLE_HOTKEY_CONTROL_PROPERTY);
 		if (val == null || val.trim().isEmpty()){
 			return false;
 		}
@@ -201,8 +203,16 @@ public class CyActivator extends AbstractCyActivator {
 			return;
 		}
 		cyProps.getProperties().setProperty("cyndex2.disable.hotkey.control", Boolean.toString(val));
+		// need to fire event
+		_cyEventHelper.fireEvent(new PropertyUpdatedEvent(cyProps));
 	}
 	
+	/**
+	 * Renames menus, appending Session to Open, Save, Save As, and Close. This is only really
+	 * needed for Cytoscape 3.9.1 and earlier since 3.10 will have this change already
+	 * 
+	 * @param menu 
+	 */
 	private void renameOpenSaveAndSaveAsMenus(JMenu menu){
 		if (menu == null){
 			logger.info("MENU IS NULL");
@@ -265,6 +275,8 @@ public class CyActivator extends AbstractCyActivator {
 		cyProps = getService(bc, CyProperty.class, "(cyPropertyName=cytoscape3.props)");
 		taskManager = getService(bc, TaskManager.class);
 		
+		_cyEventHelper = getService(bc, CyEventHelper.class);
+		
 		// For Cytoscape versions earlier then 3.10, append Session to menu names
 		renameOpenSaveAndSaveAsMenus(swingApplication.getJMenu(CyActivator.FILE_MENU_NAME));
 		
@@ -298,9 +310,8 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveNetworkTaskFactoryProps.setProperty(TITLE, "Network to NDEx...");
 		registerService(bc, ndexSaveNetworkTaskFactory, TaskFactory.class, ndexSaveNetworkTaskFactoryProps);
 		ShowDialogUtil dialogUtil = new ShowDialogUtil();
-		OpenSaveHotKeyChanger hotKeyChanger = new OpenSaveHotKeyChanger(swingApplication.getJMenu(CyActivator.FILE_MENU_NAME));
 		OpenNetworkDialog openDialog = new OpenNetworkDialog(CyActivator.numberOfNDExNetworksToList(), 
-				new BindHotKeysPanel(hotKeyChanger));
+				new BindHotKeysPanel());
 		
 		final OpenNetworkFromNDExTaskFactoryImpl openNetworkFac = new OpenNetworkFromNDExTaskFactoryImpl(serviceRegistrar, openDialog, dialogUtil);
 		final Properties openNetworkTaskFactoryProps = new Properties();
@@ -406,13 +417,15 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc, saveCollectionToNDExContextMenuTaskFactory, RootNetworkCollectionTaskFactory.class,
 				saveCollectionToNDExContextMenuProps);
 		
+		OpenSaveHotKeyChanger hotKeyChanger = new OpenSaveHotKeyChanger(swingApplication.getJMenu(CyActivator.FILE_MENU_NAME));
+		
 		// if disableHotKeyControl is false then we CAN put the
 		// hotkeys onto the network menus, otherwise leave things as
 		// is 
 		if (disableHotKeyControl == false){
 			hotKeyChanger.putHotKeysOntoNetworkMenus();
 		}
-		
+		registerAllServices(bc, new CyNDExPropertyListener(hotKeyChanger, disableHotKeyControl));
 	}
 
 	@Override
