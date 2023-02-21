@@ -30,11 +30,7 @@ public class BindHotKeysPanel implements ActionListener {
 	
 	JRadioButton _sessionButton;
 	JRadioButton _networkButton;
-	OpenSaveHotKeyChanger _changer;
-	public BindHotKeysPanel(OpenSaveHotKeyChanger changer){
-		_changer = changer;
-	}
-	
+
 	public JPanel getHotKeysPanel(){
 		JPanel panel = new JPanel();
 		BorderLayout layout = new BorderLayout();
@@ -77,10 +73,10 @@ public class BindHotKeysPanel implements ActionListener {
 		}
 		JRadioButton button = (JRadioButton)e.getSource();
 		if (button.isSelected() && button.getName().equals("network")){
-			_changer.putHotKeysOntoNetworkMenus();
+			//_changer.putHotKeysOntoNetworkMenus();
 			CyActivator.setDisableAppControlOfHotKeys(false);
 		} else if (button.isSelected() && button.getName().equals("session")){
-			_changer.putHotKeysOntoSessionMenus();
+			//_changer.putHotKeysOntoSessionMenus();
 			CyActivator.setDisableAppControlOfHotKeys(true);
 		}
 		logger.debug(e.toString());
