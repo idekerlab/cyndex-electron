@@ -11,7 +11,6 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
