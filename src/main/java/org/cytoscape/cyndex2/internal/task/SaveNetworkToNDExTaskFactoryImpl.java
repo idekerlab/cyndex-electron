@@ -19,7 +19,6 @@ import org.cytoscape.model.CyNetwork;
 
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.cyndex2.internal.ui.swing.ShowDialogUtil;
-import org.cytoscape.cyndex2.internal.util.OpenSaveHotKeyChanger;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.ndexbio.model.object.network.NetworkSummary;
@@ -53,11 +52,9 @@ import org.slf4j.LoggerFactory;
 public class SaveNetworkToNDExTaskFactoryImpl extends AbstractTaskFactory {
 	private final static Logger LOGGER = LoggerFactory.getLogger(SaveNetworkToNDExTaskFactoryImpl.class);
 	private final CyServiceRegistrar serviceRegistrar;
-	private static final long DIALOG_DISPLAY_DURATION = 5000l;
 	private boolean _alwaysPromptUser;
 	private SaveNetworkDialog _dialog;
 	private ShowDialogUtil _dialogUtil;
-	private Server _ndexServer;
 	private long _progressDisplayDurationMillis;
 	
 	
