@@ -173,7 +173,11 @@ public class OpenNetworkDialog extends BaseOpenSaveDialog {
 			// listen for changes to NDEx credentials
 			ServerManager.INSTANCE.addPropertyChangeListener(this);
 			_guiLoaded = true;
-		} 
+		} else {
+			// need to update radio buttons cause user could have
+			// directly changed preferences via Edit > Preferences
+			_hotKeysPanel.updateSelectionBasedOnPreferences();
+		}
 		updateMyNetworksTable();
 		updateSearchTable();
 

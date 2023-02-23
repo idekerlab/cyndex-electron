@@ -419,13 +419,15 @@ public class CyActivator extends AbstractCyActivator {
 		
 		OpenSaveHotKeyChanger hotKeyChanger = new OpenSaveHotKeyChanger(swingApplication.getJMenu(CyActivator.FILE_MENU_NAME));
 		
+		
+		registerAllServices(bc, new CyNDExPropertyListener(hotKeyChanger, disableHotKeyControl));
+		
 		// if disableHotKeyControl is false then we CAN put the
 		// hotkeys onto the network menus, otherwise leave things as
 		// is 
 		if (disableHotKeyControl == false){
 			hotKeyChanger.putHotKeysOntoNetworkMenus();
 		}
-		registerAllServices(bc, new CyNDExPropertyListener(hotKeyChanger, disableHotKeyControl));
 	}
 
 	@Override

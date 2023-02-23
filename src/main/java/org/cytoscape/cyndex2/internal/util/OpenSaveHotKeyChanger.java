@@ -1,6 +1,9 @@
 package org.cytoscape.cyndex2.internal.util;
 
 import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,39 +23,55 @@ import org.slf4j.LoggerFactory;
  */
 public class OpenSaveHotKeyChanger {	
 	
-	public final static Set<String> SESSION_MENU_NAMES = new HashSet<>(Arrays.asList(CyActivator.OPEN_SESSION, CyActivator.SAVE_SESSION, CyActivator.SAVE_SESSION_AS));
-	public final static Set<String> NETWORK_MENU_NAMES = new HashSet<>(Arrays.asList(CyActivator.OPEN_NETWORK, CyActivator.SAVE_NETWORK, CyActivator.SAVE_NETWORK_AS));
+	/**
+	 * Names of the session menu items
+	 */
+	public final static Set<String> SESSION_MENU_NAMES = new HashSet<>(Arrays.asList(CyActivator.OPEN_SESSION,
+			CyActivator.SAVE_SESSION, CyActivator.SAVE_SESSION_AS));
+	
+	/**
+	 * Names of the network menu items
+	 */
+	public final static Set<String> NETWORK_MENU_NAMES = new HashSet<>(Arrays.asList(CyActivator.OPEN_NETWORK,
+			CyActivator.SAVE_NETWORK, CyActivator.SAVE_NETWORK_AS));
 
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(OpenSaveHotKeyChanger.class);
 	
+	/**
+	 * Menu passed in via the constructor which contains
+	 * the menu items to modify
+	 */
 	private JMenu _fileMenu;
+	
+	/**
+	 * Cmd o or Ctrl o hotkey
+	 */
+	private static final KeyStroke OPEN_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_O,
+			Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+	
+	/**
+	 * Cmd s or Ctrl s hotkey
+	 */
+	private static final KeyStroke SAVE_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_S,
+			Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+	
+	/**
+	 * Cmd shift s or Ctrl shift s hotkey
+	 */
+	private static final KeyStroke SAVEAS_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_S,
+			Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | InputEvent.SHIFT_DOWN_MASK);
+	
 	
 	public OpenSaveHotKeyChanger(JMenu fileMenu){
 		_fileMenu = fileMenu;
 	}
-	private Map<String, KeyStroke> getMenuHotKeys(JMenu menu, Set<String> menuNames){
-		HashMap<String, KeyStroke> acceleratorMap = new HashMap<>();
-		if (menu == null){
-			logger.info("MENU IS NULL");
-			return acceleratorMap;
-		}
-		logger.info("Number of menu items: " + menu.getMenuComponentCount());
-		for (Component c : menu.getMenuComponents()){
-			logger.debug("Menu component: " + c.toString());
-			if (c instanceof JMenuItem){
-				JMenuItem curMenuItem = (JMenuItem)c;
-				if (menuNames.contains(curMenuItem.getText())){
-					acceleratorMap.put(curMenuItem.getText(), curMenuItem.getAccelerator());
-				}
-			}
-		}
-		return acceleratorMap;
-	}
 
 	/**
-	 * Takes accelerators found on session open, save, and save as file menu 
-	 * items and moves them to the network open, save, and save as file menu items
+	 * Removes accelerators from session open, save, and save as file menu 
+	 * items and puts accelerators onto the network open, save, and save as 
+	 * file menu items
+	 * 
 	 * @param menu 
 	 */
 	public void putHotKeysOntoNetworkMenus(){
@@ -60,30 +79,30 @@ public class OpenSaveHotKeyChanger {
 			logger.info("MENU IS NULL");
 			return;
 		}
-		
-		Map<String, KeyStroke> acceleratorMap = getMenuHotKeys(_fileMenu, SESSION_MENU_NAMES);
-		
+				
 		logger.info("Number of menu items: " + _fileMenu.getMenuComponentCount());
 		for (Component c : _fileMenu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
 				JMenuItem curMenuItem = (JMenuItem)c;				
-				if (acceleratorMap.containsKey(curMenuItem.getText())){
+				if (SESSION_MENU_NAMES.contains(curMenuItem.getText())){
 					curMenuItem.setAccelerator(null);
 				} else if (curMenuItem.getText().equals(CyActivator.OPEN_NETWORK)){
-					curMenuItem.setAccelerator(acceleratorMap.get(CyActivator.OPEN_SESSION));
+					curMenuItem.setAccelerator(OPEN_KEYSTROKE);
 				} else if (curMenuItem.getText().equals(CyActivator.SAVE_NETWORK)){
-					curMenuItem.setAccelerator(acceleratorMap.get(CyActivator.SAVE_SESSION));
+					curMenuItem.setAccelerator(SAVE_KEYSTROKE);
 				} else if (curMenuItem.getText().equals(CyActivator.SAVE_NETWORK_AS)){
-					curMenuItem.setAccelerator(acceleratorMap.get(CyActivator.SAVE_SESSION_AS));
+					curMenuItem.setAccelerator(SAVEAS_KEYSTROKE);
 				} 
 			}
 		}
 	}
 	
 	/**
-	 * Takes accelerators found on network open, save, and save as file menu 
-	 * items and moves them to the session open, save, and save as file menu items
+	 * Removes accelerators from network open, save, and save as file menu 
+	 * items and puts accelerators onto the session open, save, and save as 
+	 * file menu items
+	 * 
 	 * @param menu 
 	 */
 	public void putHotKeysOntoSessionMenus(){
@@ -91,22 +110,20 @@ public class OpenSaveHotKeyChanger {
 			logger.info("MENU IS NULL");
 			return;
 		}
-
-		Map<String, KeyStroke> acceleratorMap = getMenuHotKeys(_fileMenu, NETWORK_MENU_NAMES);
 		
 		logger.info("Number of menu items: " + _fileMenu.getMenuComponentCount());
 		for (Component c : _fileMenu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
 				JMenuItem curMenuItem = (JMenuItem)c;				
-				if (acceleratorMap.containsKey(curMenuItem.getText())){
+				if (NETWORK_MENU_NAMES.contains(curMenuItem.getText())){
 					curMenuItem.setAccelerator(null);
 				} else if (curMenuItem.getText().equals(CyActivator.OPEN_SESSION)){
-					curMenuItem.setAccelerator(acceleratorMap.get(CyActivator.OPEN_NETWORK));
+					curMenuItem.setAccelerator(OPEN_KEYSTROKE);
 				} else if (curMenuItem.getText().equals(CyActivator.SAVE_SESSION)){
-					curMenuItem.setAccelerator(acceleratorMap.get(CyActivator.SAVE_NETWORK));
+					curMenuItem.setAccelerator(SAVE_KEYSTROKE);
 				} else if (curMenuItem.getText().equals(CyActivator.SAVE_SESSION_AS)){
-					curMenuItem.setAccelerator(acceleratorMap.get(CyActivator.SAVE_NETWORK_AS));
+					curMenuItem.setAccelerator(SAVEAS_KEYSTROKE);
 				} 
 			}
 		}

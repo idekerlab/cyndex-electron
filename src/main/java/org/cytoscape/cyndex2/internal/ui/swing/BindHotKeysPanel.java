@@ -8,7 +8,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import org.cytoscape.cyndex2.internal.CyActivator;
-import org.cytoscape.cyndex2.internal.util.OpenSaveHotKeyChanger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,10 +72,8 @@ public class BindHotKeysPanel implements ActionListener {
 		}
 		JRadioButton button = (JRadioButton)e.getSource();
 		if (button.isSelected() && button.getName().equals("network")){
-			//_changer.putHotKeysOntoNetworkMenus();
 			CyActivator.setDisableAppControlOfHotKeys(false);
 		} else if (button.isSelected() && button.getName().equals("session")){
-			//_changer.putHotKeysOntoSessionMenus();
 			CyActivator.setDisableAppControlOfHotKeys(true);
 		}
 		logger.debug(e.toString());
