@@ -57,6 +57,7 @@ import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.NetworkCollectionTaskFactory;
 import org.cytoscape.task.RootNetworkCollectionTaskFactory;
+import static org.cytoscape.work.ServiceProperties.ACCELERATOR;
 import static org.cytoscape.work.ServiceProperties.INSERT_SEPARATOR_AFTER;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP_LONG_DESCRIPTION;
@@ -215,9 +216,9 @@ public class CyActivator extends AbstractCyActivator {
 	 */
 	private void renameOpenSaveAndSaveAsMenus(JMenu menu){
 		if (menu == null){
-			logger.info("MENU IS NULL");
+			logger.debug("MENU IS NULL");
 		}
-		logger.info("Number of menu items: " + menu.getMenuComponentCount());
+		logger.debug("Number of menu items: " + menu.getMenuComponentCount());
 
 		for (Component c : menu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
@@ -320,7 +321,9 @@ public class CyActivator extends AbstractCyActivator {
 		openNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Open Network from NDEx");
         openNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.1");
 		openNetworkTaskFactoryProps.setProperty(TITLE, CyActivator.OPEN_NETWORK);
-		
+		if (disableHotKeyControl == false){
+			openNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd o");
+		}
 		registerService(bc, openNetworkFac, TaskFactory.class, openNetworkTaskFactoryProps);
 		
 		long progressDisplayDuration = CyActivator.progressDisplayDuration();
@@ -334,7 +337,9 @@ public class CyActivator extends AbstractCyActivator {
 		saveNetworkTaskFactoryProps.setProperty(MENU_GRAVITY, "0.2");
 		saveNetworkTaskFactoryProps.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
 		saveNetworkTaskFactoryProps.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
-		
+		if (disableHotKeyControl == false){
+			saveNetworkTaskFactoryProps.setProperty(ACCELERATOR, "cmd s");
+		}
 		registerService(bc, saveNetworkFac, TaskFactory.class, saveNetworkTaskFactoryProps);
 		
 		final SaveNetworkToNDExTaskFactoryImpl saveNetworkFacAlwaysPrompt = new SaveNetworkToNDExTaskFactoryImpl(serviceRegistrar, true, progressDisplayDuration);
@@ -347,7 +352,9 @@ public class CyActivator extends AbstractCyActivator {
 		saveNetworkTaskFactoryPropsPrompt.setProperty(INSERT_SEPARATOR_AFTER, "true");
 		saveNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP, "Save a network to NDEx or a session to a file");
 		saveNetworkTaskFactoryPropsPrompt.setProperty(TOOLTIP_LONG_DESCRIPTION, "Saves a network to NDEx or a session to file (.cys)");
-		
+		if (disableHotKeyControl == false){
+			saveNetworkTaskFactoryPropsPrompt.setProperty(ACCELERATOR, "cmd shift s");
+		}
 		registerService(bc, saveNetworkFacAlwaysPrompt, TaskFactory.class, saveNetworkTaskFactoryPropsPrompt);
 		
 		// TF for NDEx Save Collection
