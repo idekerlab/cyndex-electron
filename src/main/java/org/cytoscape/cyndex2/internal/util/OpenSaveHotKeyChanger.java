@@ -5,9 +5,7 @@ import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -76,11 +74,11 @@ public class OpenSaveHotKeyChanger {
 	 */
 	public void putHotKeysOntoNetworkMenus(){
 		if (_fileMenu == null){
-			logger.info("MENU IS NULL");
+			logger.debug("MENU IS NULL");
 			return;
 		}
 				
-		logger.info("Number of menu items: " + _fileMenu.getMenuComponentCount());
+		logger.debug("Number of menu items: " + _fileMenu.getMenuComponentCount());
 		for (Component c : _fileMenu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
@@ -107,11 +105,11 @@ public class OpenSaveHotKeyChanger {
 	 */
 	public void putHotKeysOntoSessionMenus(){
 		if (_fileMenu == null){
-			logger.info("MENU IS NULL");
+			logger.debug("MENU IS NULL");
 			return;
 		}
 		
-		logger.info("Number of menu items: " + _fileMenu.getMenuComponentCount());
+		logger.debug("Number of menu items: " + _fileMenu.getMenuComponentCount());
 		for (Component c : _fileMenu.getMenuComponents()){
 			logger.debug("Menu component: " + c.toString());
 			if (c instanceof JMenuItem){
