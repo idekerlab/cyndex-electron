@@ -160,14 +160,6 @@ public class CyActivator extends AbstractCyActivator {
 		ndexSaveNetworkTaskFactoryProps.setProperty(TITLE, "Network to NDEx...");
 		registerService(bc, ndexSaveNetworkTaskFactory, TaskFactory.class, ndexSaveNetworkTaskFactoryProps);
 
-		// TF for NDEx Save Collection
-		final OpenSaveCollectionTaskFactory ndexSaveCollectionTaskFactory = new OpenSaveCollectionTaskFactory(appManager);
-		final Properties ndexSaveCollectionTaskFactoryProps = new Properties();
-
-		ndexSaveCollectionTaskFactoryProps.setProperty(PREFERRED_MENU, "File.Export");
-		ndexSaveCollectionTaskFactoryProps.setProperty(MENU_GRAVITY, "0.1");
-		ndexSaveCollectionTaskFactoryProps.setProperty(TITLE, "Collection to NDEx...");
-		registerService(bc, ndexSaveCollectionTaskFactory, TaskFactory.class, ndexSaveCollectionTaskFactoryProps);
 		
 		ImportNetworkFromNDExTaskFactory importFromNDExTaskFactory = new ImportNetworkFromNDExTaskFactory(ExternalAppManager.APP_NAME_LOAD);
 		ImportUserNetworkFromNDExTaskFactory importUserNetworkTaskFactory = new ImportUserNetworkFromNDExTaskFactory(ExternalAppManager.APP_NAME_LOAD);
@@ -216,15 +208,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		registerService(bc, saveNetworkToNDExContextMenuTaskFactory, NetworkCollectionTaskFactory.class,
 				saveNetworkToNDExContextMenuProps);
-		
-		OpenSaveCollectionTaskFactory saveCollectionToNDExContextMenuTaskFactory = new OpenSaveCollectionTaskFactory(appManager);
-		Properties saveCollectionToNDExContextMenuProps = new Properties();
-		saveNetworkToNDExContextMenuProps.setProperty(ID, "saveCollectionToNDEx");
-		saveCollectionToNDExContextMenuProps.setProperty(TITLE, StringResources.NDEX_SAVE_COLLECTION.concat("..."));
-		saveCollectionToNDExContextMenuProps.setProperty(IN_NETWORK_PANEL_CONTEXT_MENU, "true");
-		saveCollectionToNDExContextMenuProps.setProperty(MENU_GRAVITY, "1.0");
-		registerService(bc, saveCollectionToNDExContextMenuTaskFactory, RootNetworkCollectionTaskFactory.class,
-				saveCollectionToNDExContextMenuProps);
+
 	}
 
 	@Override
