@@ -32,7 +32,7 @@ import org.cytoscape.work.swing.DialogTaskManager;
 public class MainToolBarAction extends AbstractCyAction {
 
 	private static final String TITLE = "Open or Save Networks in NDEx...";
-	private static final String DESCRIPTION = "Open or Save Networks and Collections in NDEx, the Cloud Storage for the Cytoscape Cyberinfrastructure";
+	private static final String DESCRIPTION = "Open or Save Networks in NDEx, the Cloud Storage for the Cytoscape Cyberinfrastructure";
 	private final ImportNetworkFromNDExTaskFactory importTaskFactory;
 	private final ImportUserNetworkFromNDExTaskFactory importUserNetworkTaskFactory;
 	private final SaveNetworkToNDExTaskFactory saveTaskFactory;
